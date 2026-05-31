@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+ 
 =======
 # 🌀 페르마 나선 오비탈 시뮬레이터 (Fermat Spiral Orbital Simulator)
 
@@ -17,4 +17,4 @@ https://stargager01.github.io/fermat-orbital-simulator/
 저장소에 있는 `index.html` 파일의 코드를 복사하거나 다운로드하여 **웹 브라우저(크롬, 사파리 등)**에서 열기만 하면 바로 시뮬레이터가 실행됩니다.
 
 
->>>>>>> 6ab99492b4c4345a079f5c5c5b7c29fe92c4a14b
+ 
