@@ -3,321 +3,966 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>페르마 나선 오비탈 시뮬레이터</title>
+<title>페르마 나선 오비탈 시뮬레이션 대시보드 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@300;400;600&display=swap');
-
+/* ── DESIGN SYSTEM & CONSTANTS ── */
 :root {
-  --bg: #08090e;
-  --surface: #0d1020;
-  --card: #111827;
-  --border: rgba(255,255,255,0.07);
-  --text: #d4dbe8;
-  --dim: #4a5568;
-  --s: #f5a623; --s-glow: rgba(245,166,35,0.2);
-  --p: #4fc3f7; --p-glow: rgba(79,195,247,0.2);
-  --d: #81c784; --d-glow: rgba(129,199,132,0.2);
-  --f: #ce93d8; --f-glow: rgba(206,147,216,0.2);
-  --g: #ffb74d; --g-glow: rgba(255,183,77,0.2);
+  --bg: #07080f;
+  --surf: #0c0e1a;
+  --card: #111524;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-glow: rgba(255, 255, 255, 0.15);
+  
+  --text: #d5dce8;
+  --text-bright: #ffffff;
+  --dim: #5c6479;
+  
+  /* Orbital colors */
+  --s: #f5a94a;
+  --s-glow: rgba(245, 169, 74, 0.2);
+  --p: #4fc3f7;
+  --p-glow: rgba(79, 195, 247, 0.2);
+  --d: #72d48a;
+  --d-glow: rgba(114, 212, 138, 0.2);
+  --f: #ce93d8;
+  --f-glow: rgba(206, 147, 216, 0.2);
+  
+  /* Highlights & alerts */
+  --ex: #ff6b6b;
+  --ex-glow: rgba(255, 107, 107, 0.25);
+  --rel: #00e5ff;
+  --rel-glow: rgba(0, 229, 255, 0.25);
+  --warn: #ffa726;
 }
 
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
-  background:var(--bg);
-  color:var(--text);
-  font-family:'Libre Baskerville',serif;
-  min-height:100vh;
-  overflow-x:hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'EB Garamond', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
 }
 
 /* ── HEADER ── */
 header {
-  padding:32px 40px 24px;
-  border-bottom:1px solid var(--border);
-  display:flex; align-items:flex-end; justify-content:space-between;
-  flex-wrap:wrap; gap:12px;
-  position:sticky; top:0; z-index:100;
-  background:rgba(8,9,14,0.95);
-  backdrop-filter:blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(7, 8, 15, 0.96);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
 }
-.header-left .eyebrow {
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px; letter-spacing:3px; color:var(--dim);
-  text-transform:uppercase; margin-bottom:6px;
+
+.logo-section .eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
-.header-left h1 {
-  font-size:clamp(1.1rem,2.5vw,1.6rem);
-  font-weight:400; font-style:italic;
-  line-height:1.2;
+
+.logo-section h1 {
+  font-size: 1.3rem;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.5px;
 }
-.header-left h1 strong { font-style:normal; font-weight:700; }
-.legend {
-  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+
+.logo-section h1 strong {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--s);
 }
-.leg { display:flex; align-items:center; gap:5px;
-  font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--dim);
+
+.htabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
 }
-.leg-dot { width:8px; height:8px; border-radius:50%; }
+
+.htab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 2px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.htab:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.htab.active {
+  color: var(--s);
+  background: rgba(245, 169, 74, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(245, 169, 74, 0.25);
+}
+
+.hlegend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hleg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+}
+
+.hleg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
 
 /* ── LAYOUT ── */
-.app { display:grid; grid-template-columns:1fr 380px; min-height:calc(100vh - 85px); }
-@media(max-width:1000px){ .app { grid-template-columns:1fr; } }
-
-/* ── LEFT: periodic table + canvas ── */
-.left-panel { padding:24px 20px 24px 32px; display:flex; flex-direction:column; gap:20px; }
-
-/* Periodic table */
-.pt-wrap { overflow-x:auto; }
-.pt-label {
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px; letter-spacing:3px; color:var(--dim);
-  text-transform:uppercase; margin-bottom:10px;
+.app {
+  display: grid;
+  grid-template-columns: 1fr 390px;
+  min-height: calc(100vh - 72px);
 }
+
+@media (max-width: 1100px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+}
+
+.left-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.right-panel {
+  border-left: 1px solid var(--border);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  max-height: calc(100vh - 72px);
+  position: sticky;
+  top: 72px;
+}
+
+/* ── PERIODIC TABLE ── */
+.pt-scroll {
+  overflow-x: auto;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.01);
+  padding: 12px;
+}
+
+.sec-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .pt-grid {
-  display:grid;
-  grid-template-columns: repeat(18, minmax(34px,1fr));
-  gap:2px;
-  min-width:640px;
+  display: grid;
+  grid-template-columns: repeat(18, minmax(30px, 1fr));
+  gap: 2px;
+  min-width: 580px;
 }
+
 .pt-cell {
-  aspect-ratio:1;
-  border-radius:2px;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  cursor:pointer;
-  border:1px solid transparent;
-  transition:all .15s;
-  position:relative;
-  background:var(--card);
+  aspect-ratio: 1;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--card);
+  position: relative;
 }
-.pt-cell:hover { transform:scale(1.12); z-index:10; }
-.pt-cell.active { z-index:20; }
+
+.pt-cell:hover {
+  transform: scale(1.15);
+  z-index: 10;
+  border-color: var(--border-glow);
+}
+
+.pt-cell.active {
+  z-index: 20;
+}
+
+.pt-cell.empty {
+  background: transparent;
+  border: none;
+  pointer-events: none;
+}
+
 .pt-cell .sym {
-  font-family:'JetBrains Mono',monospace;
-  font-size:clamp(8px,1.1vw,11px);
-  font-weight:600; line-height:1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(8px, 1vw, 11px);
+  font-weight: 600;
+  line-height: 1;
 }
+
 .pt-cell .num {
-  font-family:'JetBrains Mono',monospace;
-  font-size:clamp(6px,0.8vw,8px);
-  color:var(--dim); line-height:1; margin-top:1px;
-}
-.pt-cell.empty { background:transparent; border:none; cursor:default; pointer-events:none; }
-.pt-cell.gap-label {
-  background:transparent; border:none; cursor:default; pointer-events:none;
-  font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--dim);
-  justify-content:flex-end; padding-bottom:4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(5px, 0.7vw, 7.5px);
+  color: var(--dim);
+  line-height: 1;
+  margin-top: 2px;
 }
 
-/* block colors */
-.pt-cell.s-block { border-color:rgba(245,166,35,0.25); }
-.pt-cell.s-block .sym { color:var(--s); }
-.pt-cell.p-block { border-color:rgba(79,195,247,0.25); }
-.pt-cell.p-block .sym { color:var(--p); }
-.pt-cell.d-block { border-color:rgba(129,199,132,0.25); }
-.pt-cell.d-block .sym { color:var(--d); }
-.pt-cell.f-block { border-color:rgba(206,147,216,0.25); }
-.pt-cell.f-block .sym { color:var(--f); }
+/* Highlights on cells */
+.pt-cell .ex-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ex);
+  box-shadow: 0 0 4px var(--ex);
+}
 
-.pt-cell.active.s-block { background:var(--s-glow); border-color:var(--s); box-shadow:0 0 12px var(--s-glow); }
-.pt-cell.active.p-block { background:var(--p-glow); border-color:var(--p); box-shadow:0 0 12px var(--p-glow); }
-.pt-cell.active.d-block { background:var(--d-glow); border-color:var(--d); box-shadow:0 0 12px var(--d-glow); }
-.pt-cell.active.f-block { background:var(--f-glow); border-color:var(--f); box-shadow:0 0 12px var(--f-glow); }
+.pt-cell .rel-dot {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--rel);
+  box-shadow: 0 0 4px var(--rel);
+}
 
-/* ── CANVAS AREA ── */
-.canvas-section {
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:4px;
-  padding:20px;
-  display:flex; flex-direction:column; gap:16px;
+/* Block styles */
+.pt-cell.s-block { border-color: rgba(245, 169, 74, 0.15); }
+.pt-cell.s-block .sym { color: var(--s); }
+.pt-cell.p-block { border-color: rgba(79, 195, 247, 0.15); }
+.pt-cell.p-block .sym { color: var(--p); }
+.pt-cell.d-block { border-color: rgba(114, 212, 138, 0.15); }
+.pt-cell.d-block .sym { color: var(--d); }
+.pt-cell.f-block { border-color: rgba(206, 147, 216, 0.15); }
+.pt-cell.f-block .sym { color: var(--f); }
+
+.pt-cell.active.s-block { background: var(--s-glow); border-color: var(--s); box-shadow: 0 0 10px var(--s-glow); }
+.pt-cell.active.p-block { background: var(--p-glow); border-color: var(--p); box-shadow: 0 0 10px var(--p-glow); }
+.pt-cell.active.d-block { background: var(--d-glow); border-color: var(--d); box-shadow: 0 0 10px var(--d-glow); }
+.pt-cell.active.f-block { background: var(--f-glow); border-color: var(--f); box-shadow: 0 0 10px var(--f-glow); }
+
+/* Periodic table dynamic highlights based on tab */
+.pt-grid.highlight-ex .pt-cell.has-ex {
+  animation: ex-pulse 1.8s infinite alternate;
 }
-.canvas-header {
-  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+@keyframes ex-pulse {
+  from { border-color: rgba(255, 107, 107, 0.3); box-shadow: 0 0 2px rgba(255, 107, 107, 0.1); }
+  to { border-color: var(--ex); box-shadow: 0 0 12px rgba(255, 107, 107, 0.6); }
 }
-.canvas-title {
-  font-size:1.1rem; font-style:italic;
+
+.pt-grid.highlight-rel .pt-cell.has-rel {
+  animation: rel-pulse 1.8s infinite alternate;
 }
-.canvas-title strong { font-style:normal; }
-.anim-btn {
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px; letter-spacing:2px; text-transform:uppercase;
-  padding:6px 14px; border-radius:2px;
-  background:transparent; cursor:pointer; transition:all .2s;
+@keyframes rel-pulse {
+  from { border-color: rgba(0, 229, 255, 0.3); box-shadow: 0 0 2px rgba(0, 229, 255, 0.1); }
+  to { border-color: var(--rel); box-shadow: 0 0 12px rgba(0, 229, 255, 0.6); }
 }
-.anim-btn.on  { border:1px solid var(--s); color:var(--s); }
-.anim-btn.off { border:1px solid var(--dim); color:var(--dim); }
+
+/* ── SIMULATOR CANVAS BOX ── */
+.cbox {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cbox-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cbox-title {
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--text-bright);
+}
+
+.cbox-title strong {
+  font-style: normal;
+}
+
+.cbox-title span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--dim);
+  margin-left: 8px;
+}
+
+.ctrls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cbtn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.cbtn.on {
+  border-color: var(--s);
+  color: var(--s);
+  background: rgba(245, 169, 74, 0.05);
+}
+
+.cbtn:hover {
+  border-color: var(--text);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  height: 5px;
+  width: 70px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background: var(--s);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 5px var(--s);
+  transition: transform 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+.canvas-row {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
 .canvas-wrap {
-  display:flex; justify-content:center; align-items:center;
-  position:relative;
-}
-#orbitalCanvas {
-  border-radius:50%;
-  background:radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
-}
-
-/* ── RIGHT PANEL ── */
-.right-panel {
-  border-left:1px solid var(--border);
-  padding:24px 24px 40px;
-  display:flex; flex-direction:column; gap:20px;
-  overflow-y:auto; max-height:calc(100vh - 85px);
-  position:sticky; top:85px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
 }
 
+.canvas-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+canvas {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.015) 0%, transparent 70%);
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  image-rendering: -webkit-optimize-contrast; /* Sharp canvas rendering */
+}
+
+/* ── ENERGY DIAGRAM BOX ── */
+.ediag {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+#ediagCanvas {
+  width: 100%;
+  height: 160px;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
+/* ── SIDEBAR CARDS ── */
 .section-label {
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px; letter-spacing:3px; color:var(--dim);
-  text-transform:uppercase; margin-bottom:10px;
-  padding-bottom:6px; border-bottom:1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
 }
 
-/* Element info card */
-.elem-card {
-  background:var(--card); border-radius:4px; padding:18px;
-  border:1px solid var(--border);
-}
-.elem-card .big-sym {
-  font-family:'JetBrains Mono',monospace;
-  font-size:3rem; font-weight:600; line-height:1;
-}
-.elem-card .elem-name { font-size:1.1rem; font-style:italic; margin-top:4px; }
-.elem-card .elem-meta {
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px; color:var(--dim); margin-top:8px; line-height:1.7;
-}
-.elem-card .config {
-  margin-top:10px; padding:8px 12px;
-  background:rgba(255,255,255,0.03);
-  border-radius:2px;
-  font-family:'JetBrains Mono',monospace;
-  font-size:11px; color:var(--text);
-  line-height:1.6; word-break:break-all;
+/* Element Info Card */
+.ecard {
+  background: var(--card);
+  border-radius: 4px;
+  padding: 20px;
+  border: 1px solid var(--border);
 }
 
-/* Layer toggles */
-.layers { display:flex; flex-direction:column; gap:6px; }
-.layer-row {
-  display:flex; align-items:center; gap:10px;
-  padding:10px 12px;
-  background:var(--card); border-radius:3px;
-  border:1px solid var(--border);
-  cursor:pointer; transition:all .15s; user-select:none;
-}
-.layer-row:hover { border-color:rgba(255,255,255,0.15); }
-.layer-row.active { border-color:var(--lc); background:color-mix(in srgb, var(--lc) 10%, var(--card)); }
-.layer-toggle {
-  width:16px; height:16px; border-radius:3px;
-  border:2px solid var(--lc); background:transparent;
-  transition:background .15s; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-}
-.layer-row.active .layer-toggle { background:var(--lc); }
-.layer-check { font-size:9px; color:var(--bg); display:none; }
-.layer-row.active .layer-check { display:block; }
-.layer-info { flex:1; }
-.layer-name {
-  font-family:'JetBrains Mono',monospace;
-  font-size:11px; color:var(--text); font-weight:600;
-}
-.layer-formula {
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px; color:var(--dim); margin-top:2px;
-}
-.layer-electrons {
-  font-family:'JetBrains Mono',monospace;
-  font-size:10px; color:var(--lc); font-weight:600;
+.ecard-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
 }
 
-/* Math panel */
-.math-panel {
-  background:var(--card); border-radius:4px; padding:16px;
-  border:1px solid var(--border);
-}
-.math-eq {
-  font-family:'JetBrains Mono',monospace;
-  font-size:11px; color:var(--text); line-height:2;
-}
-.math-eq span { color:var(--dim); }
-.math-highlight { color:var(--s) !important; }
-
-.phys-desc {
-  font-size:0.88rem; color:var(--dim);
-  line-height:1.75; margin-top:10px;
+.ecard-top .big-sym {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
-/* Quantum numbers */
-.qn-grid {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
-}
-.qn-box {
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--border);
-  border-radius:3px; padding:10px 8px; text-align:center;
-}
-.qn-val {
-  font-family:'JetBrains Mono',monospace;
-  font-size:1.1rem; font-weight:600;
-}
-.qn-lbl {
-  font-family:'JetBrains Mono',monospace;
-  font-size:8px; color:var(--dim); margin-top:3px; letter-spacing:1px;
+.ecard-info {
+  flex: 1;
 }
 
-/* placeholder */
+.ecard-info .ename {
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--text-bright);
+}
+
+.ecard-info .emeta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  margin-top: 2px;
+  line-height: 1.7;
+}
+
+.econfig {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  word-break: break-all;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.badge.ex {
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: var(--ex);
+}
+
+.badge.rel {
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: var(--rel);
+}
+
+.badge.stable {
+  background: rgba(114, 212, 138, 0.08);
+  border: 1px solid rgba(114, 212, 138, 0.25);
+  color: var(--d);
+}
+
+/* Layer Toggle rows */
+.layers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--card);
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.lrow:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.lrow.on {
+  border-color: var(--lc);
+  background: color-mix(in srgb, var(--lc) 8%, var(--card));
+}
+
+.ltog {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 2px solid var(--lc);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.lrow.on .ltog {
+  background: var(--lc);
+}
+
+.lcheck {
+  font-size: 9px;
+  color: var(--bg);
+  font-weight: bold;
+  display: none;
+}
+
+.lrow.on .lcheck {
+  display: block;
+}
+
+.linfo {
+  flex: 1;
+}
+
+.lname {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+.lname span {
+  color: var(--dim);
+  font-weight: 300;
+}
+
+.lform {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--dim);
+  margin-top: 2px;
+}
+
+.lelec {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Quantum Numbers Card */
+.qngrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.qnbox {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.qnval {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.qnlbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--dim);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Exchange Energy Panel */
+.expanel {
+  background: var(--card);
+  border-radius: 4px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+.ex-eq {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.ex-eq .hi { color: var(--ex); font-weight: 600; }
+.ex-eq .hi2 { color: var(--warn); }
+
+.ex-bars {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ex-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ex-bar-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--dim);
+  width: 75px;
+  flex-shrink: 0;
+}
+
+.ex-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ex-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+.ex-bar-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  width: 25px;
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: bold;
+}
+
+.ex-note-desc {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: rgba(255, 107, 107, 0.85);
+  line-height: 1.6;
+  border-top: 1px dashed rgba(255, 107, 107, 0.15);
+  padding-top: 10px;
+}
+
+/* Relativistic Panel */
+.relpanel {
+  background: var(--card);
+  border-radius: 4px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+.rel-meters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.rel-meter {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.rel-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--rel);
+}
+
+.rel-lbl {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: var(--dim);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.rel-bar-wrap {
+  margin-top: 10px;
+}
+
+.rel-bar-bg {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rel-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+.rel-note-desc {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: rgba(0, 229, 255, 0.85);
+  line-height: 1.6;
+  border-top: 1px dashed rgba(0, 229, 255, 0.15);
+  padding-top: 10px;
+}
+
+/* Math Panel */
+.mathpanel {
+  background: var(--card);
+  border-radius: 4px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+.meq {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  line-height: 2.1;
+  color: var(--dim);
+}
+
+.meq b {
+  color: var(--text-bright);
+}
+
+.meq .mc {
+  color: var(--s);
+  font-weight: bold;
+}
+
+.pdesc {
+  font-size: 0.88rem;
+  color: var(--dim);
+  line-height: 1.7;
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+/* Placeholder */
 .placeholder {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  height:200px; color:var(--dim);
-  font-family:'JetBrains Mono',monospace; font-size:11px;
-  letter-spacing:2px; text-align:center; gap:12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-align: center;
+  gap: 12px;
 }
-.placeholder svg { opacity:.3; }
 
-/* scrollbar */
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--dim);border-radius:2px;}
+.placeholder svg {
+  opacity: 0.2;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--dim);
+  border-radius: 2px;
+}
+
+/* ── VIEW TAB FILTER VISIBILITY ── */
+/* Custom visibility mapping */
+.view-orbital .exch-only,
+.view-orbital .rel-only,
+.view-exchange .rel-only,
+.view-relativistic .exch-only {
+  display: none !important;
+}
+
+.view-dashboard .exch-only,
+.view-dashboard .rel-only {
+  display: block !important;
+}
+
+/* When relativistic comparison is shown */
+.rel-canvas-wrap {
+  display: none;
+}
+.view-relativistic .rel-canvas-wrap,
+.view-dashboard .rel-canvas-wrap {
+  display: flex;
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-left">
-    <div class="eyebrow">Fermat Spiral Orbital Simulator · 118 Elements</div>
+  <div class="logo-section">
+    <div class="eyebrow">Fermat Spiral Orbital Simulator · v2.0 Integrated</div>
     <h1><em>페르마 나선</em>으로 보는 <strong>오비탈 전자 구조</strong></h1>
   </div>
-  <div class="legend">
-    <div class="leg"><div class="leg-dot" style="background:var(--s)"></div>s-block</div>
-    <div class="leg"><div class="leg-dot" style="background:var(--p)"></div>p-block</div>
-    <div class="leg"><div class="leg-dot" style="background:var(--d)"></div>d-block</div>
-    <div class="leg"><div class="leg-dot" style="background:var(--f)"></div>f-block</div>
+  <div class="htabs">
+    <button class="htab active" onclick="switchTab('orbital', event)">오비탈</button>
+    <button class="htab" onclick="switchTab('exchange', event)">교환 에너지</button>
+    <button class="htab" onclick="switchTab('relativistic', event)">상대론적 효과</button>
+    <button class="htab" onclick="switchTab('dashboard', event)">종합 대시보드</button>
+  </div>
+  <div class="hlegend">
+    <div class="hleg"><div class="hleg-dot" style="background:var(--s)"></div>s-block</div>
+    <div class="hleg"><div class="hleg-dot" style="background:var(--p)"></div>p-block</div>
+    <div class="hleg"><div class="hleg-dot" style="background:var(--d)"></div>d-block</div>
+    <div class="hleg"><div class="hleg-dot" style="background:var(--f)"></div>f-block</div>
+    <div class="hleg"><div class="hleg-dot" style="background:var(--ex)"></div>예외 배치</div>
+    <div class="hleg"><div class="hleg-dot" style="background:var(--rel)"></div>상대론적 효과</div>
   </div>
 </header>
 
-<div class="app">
-  <!-- LEFT -->
+<div class="app view-orbital" id="appContainer">
+  <!-- LEFT PANEL -->
   <div class="left-panel">
-    <div class="pt-wrap">
-      <div class="pt-label">주기율표 — 원소를 선택하세요</div>
-      <div class="pt-grid" id="ptGrid"></div>
+    <!-- PERIODIC TABLE -->
+    <div>
+      <div class="sec-label">주기율표 <span>원소를 선택하면 나선 궤도가 갱신됩니다</span></div>
+      <div class="pt-scroll">
+        <div class="pt-grid" id="ptGrid"></div>
+      </div>
     </div>
-    <div class="canvas-section">
-      <div class="canvas-header">
-        <div class="canvas-title" id="canvasTitle">
-          <span style="color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:11px;">원소를 선택하면 오비탈이 표시됩니다</span>
+    
+    <!-- CANVAS BOX -->
+    <div class="cbox">
+      <div class="cbox-hdr">
+        <div class="cbox-title" id="canvasTitle">
+          <span>원소를 선택해 주세요</span>
         </div>
-        <button class="anim-btn off" id="animBtn" onclick="toggleAnim()">● 회전 OFF</button>
+        <div class="ctrls">
+          <div class="slider-wrap">
+            <span>회전 속도</span>
+            <input type="range" id="speedSlider" min="0" max="40" value="10">
+          </div>
+          <button class="cbtn off" id="animBtn" onclick="toggleAnim()">회전 OFF</button>
+        </div>
       </div>
-      <div class="canvas-wrap">
-        <canvas id="orbitalCanvas" width="420" height="420"></canvas>
+      <div class="canvas-row">
+        <div class="canvas-wrap main-canvas-wrap">
+          <div class="canvas-lbl">페르마 나선 오비탈</div>
+          <canvas id="mainCanvas"></canvas>
+        </div>
+        <div class="canvas-wrap rel-canvas-wrap">
+          <div class="canvas-lbl">상대론적 보정 비교</div>
+          <canvas id="relCanvas"></canvas>
+        </div>
       </div>
+    </div>
+
+    <!-- ENERGY DIAGRAM -->
+    <div class="ediag">
+      <div class="sec-label">오비탈 에너지 준위 및 전자의 훈트 규칙 스핀 분포 (Outer / Valence Subshells)</div>
+      <canvas id="ediagCanvas"></canvas>
     </div>
   </div>
 
-  <!-- RIGHT -->
+  <!-- RIGHT PANEL (SIDEBAR) -->
   <div class="right-panel" id="rightPanel">
     <div class="placeholder">
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -331,503 +976,889 @@ header {
 
 <script>
 // ═══════════════════════════════════════════
-// DATA: 118 elements with electron config
+// DATABASE: 118 Elements with Integrated Info
 // ═══════════════════════════════════════════
 const ELEMENTS = [
-  {z:1,  sym:'H',  name:'수소',    period:1, group:1,  block:'s', config:'1s¹',                    mass:1.008},
-  {z:2,  sym:'He', name:'헬륨',    period:1, group:18, block:'s', config:'1s²',                    mass:4.003},
-  {z:3,  sym:'Li', name:'리튬',    period:2, group:1,  block:'s', config:'[He]2s¹',               mass:6.941},
-  {z:4,  sym:'Be', name:'베릴륨',  period:2, group:2,  block:'s', config:'[He]2s²',               mass:9.012},
-  {z:5,  sym:'B',  name:'붕소',    period:2, group:13, block:'p', config:'[He]2s²2p¹',            mass:10.81},
-  {z:6,  sym:'C',  name:'탄소',    period:2, group:14, block:'p', config:'[He]2s²2p²',            mass:12.01},
-  {z:7,  sym:'N',  name:'질소',    period:2, group:15, block:'p', config:'[He]2s²2p³',            mass:14.01},
-  {z:8,  sym:'O',  name:'산소',    period:2, group:16, block:'p', config:'[He]2s²2p⁴',            mass:16.00},
-  {z:9,  sym:'F',  name:'플루오린',period:2, group:17, block:'p', config:'[He]2s²2p⁵',            mass:19.00},
-  {z:10, sym:'Ne', name:'네온',    period:2, group:18, block:'p', config:'[He]2s²2p⁶',            mass:20.18},
-  {z:11, sym:'Na', name:'나트륨',  period:3, group:1,  block:'s', config:'[Ne]3s¹',               mass:22.99},
-  {z:12, sym:'Mg', name:'마그네슘',period:3, group:2,  block:'s', config:'[Ne]3s²',               mass:24.31},
-  {z:13, sym:'Al', name:'알루미늄',period:3, group:13, block:'p', config:'[Ne]3s²3p¹',            mass:26.98},
-  {z:14, sym:'Si', name:'규소',    period:3, group:14, block:'p', config:'[Ne]3s²3p²',            mass:28.09},
-  {z:15, sym:'P',  name:'인',      period:3, group:15, block:'p', config:'[Ne]3s²3p³',            mass:30.97},
-  {z:16, sym:'S',  name:'황',      period:3, group:16, block:'p', config:'[Ne]3s²3p⁴',            mass:32.07},
-  {z:17, sym:'Cl', name:'염소',    period:3, group:17, block:'p', config:'[Ne]3s²3p⁵',            mass:35.45},
-  {z:18, sym:'Ar', name:'아르곤',  period:3, group:18, block:'p', config:'[Ne]3s²3p⁶',            mass:39.95},
-  {z:19, sym:'K',  name:'칼륨',    period:4, group:1,  block:'s', config:'[Ar]4s¹',               mass:39.10},
-  {z:20, sym:'Ca', name:'칼슘',    period:4, group:2,  block:'s', config:'[Ar]4s²',               mass:40.08},
-  {z:21, sym:'Sc', name:'스칸듐',  period:4, group:3,  block:'d', config:'[Ar]3d¹4s²',            mass:44.96},
-  {z:22, sym:'Ti', name:'타이타늄',period:4, group:4,  block:'d', config:'[Ar]3d²4s²',            mass:47.87},
-  {z:23, sym:'V',  name:'바나듐',  period:4, group:5,  block:'d', config:'[Ar]3d³4s²',            mass:50.94},
-  {z:24, sym:'Cr', name:'크로뮴',  period:4, group:6,  block:'d', config:'[Ar]3d⁵4s¹',            mass:52.00},
-  {z:25, sym:'Mn', name:'망가니즈',period:4, group:7,  block:'d', config:'[Ar]3d⁵4s²',            mass:54.94},
-  {z:26, sym:'Fe', name:'철',      period:4, group:8,  block:'d', config:'[Ar]3d⁶4s²',            mass:55.85},
-  {z:27, sym:'Co', name:'코발트',  period:4, group:9,  block:'d', config:'[Ar]3d⁷4s²',            mass:58.93},
-  {z:28, sym:'Ni', name:'니켈',    period:4, group:10, block:'d', config:'[Ar]3d⁸4s²',            mass:58.69},
-  {z:29, sym:'Cu', name:'구리',    period:4, group:11, block:'d', config:'[Ar]3d¹⁰4s¹',           mass:63.55},
-  {z:30, sym:'Zn', name:'아연',    period:4, group:12, block:'d', config:'[Ar]3d¹⁰4s²',           mass:65.38},
-  {z:31, sym:'Ga', name:'갈륨',    period:4, group:13, block:'p', config:'[Ar]3d¹⁰4s²4p¹',        mass:69.72},
-  {z:32, sym:'Ge', name:'저마늄',  period:4, group:14, block:'p', config:'[Ar]3d¹⁰4s²4p²',        mass:72.63},
-  {z:33, sym:'As', name:'비소',    period:4, group:15, block:'p', config:'[Ar]3d¹⁰4s²4p³',        mass:74.92},
-  {z:34, sym:'Se', name:'셀레늄',  period:4, group:16, block:'p', config:'[Ar]3d¹⁰4s²4p⁴',        mass:78.97},
-  {z:35, sym:'Br', name:'브로민',  period:4, group:17, block:'p', config:'[Ar]3d¹⁰4s²4p⁵',        mass:79.90},
-  {z:36, sym:'Kr', name:'크립톤',  period:4, group:18, block:'p', config:'[Ar]3d¹⁰4s²4p⁶',        mass:83.80},
-  {z:37, sym:'Rb', name:'루비듐',  period:5, group:1,  block:'s', config:'[Kr]5s¹',               mass:85.47},
-  {z:38, sym:'Sr', name:'스트론튬',period:5, group:2,  block:'s', config:'[Kr]5s²',               mass:87.62},
-  {z:39, sym:'Y',  name:'이트륨',  period:5, group:3,  block:'d', config:'[Kr]4d¹5s²',            mass:88.91},
-  {z:40, sym:'Zr', name:'지르코늄',period:5, group:4,  block:'d', config:'[Kr]4d²5s²',            mass:91.22},
-  {z:41, sym:'Nb', name:'나이오븀', period:5, group:5,  block:'d', config:'[Kr]4d⁴5s¹',            mass:92.91},
-  {z:42, sym:'Mo', name:'몰리브데넘',period:5,group:6,  block:'d', config:'[Kr]4d⁵5s¹',            mass:95.96},
-  {z:43, sym:'Tc', name:'테크네튬',period:5, group:7,  block:'d', config:'[Kr]4d⁵5s²',            mass:98},
-  {z:44, sym:'Ru', name:'루테늄',  period:5, group:8,  block:'d', config:'[Kr]4d⁷5s¹',            mass:101.1},
-  {z:45, sym:'Rh', name:'로듐',    period:5, group:9,  block:'d', config:'[Kr]4d⁸5s¹',            mass:102.9},
-  {z:46, sym:'Pd', name:'팔라듐',  period:5, group:10, block:'d', config:'[Kr]4d¹⁰',              mass:106.4},
-  {z:47, sym:'Ag', name:'은',      period:5, group:11, block:'d', config:'[Kr]4d¹⁰5s¹',           mass:107.9},
-  {z:48, sym:'Cd', name:'카드뮴',  period:5, group:12, block:'d', config:'[Kr]4d¹⁰5s²',           mass:112.4},
-  {z:49, sym:'In', name:'인듐',    period:5, group:13, block:'p', config:'[Kr]4d¹⁰5s²5p¹',        mass:114.8},
-  {z:50, sym:'Sn', name:'주석',    period:5, group:14, block:'p', config:'[Kr]4d¹⁰5s²5p²',        mass:118.7},
-  {z:51, sym:'Sb', name:'안티모니',period:5, group:15, block:'p', config:'[Kr]4d¹⁰5s²5p³',        mass:121.8},
-  {z:52, sym:'Te', name:'텔루륨',  period:5, group:16, block:'p', config:'[Kr]4d¹⁰5s²5p⁴',        mass:127.6},
-  {z:53, sym:'I',  name:'아이오딘',period:5, group:17, block:'p', config:'[Kr]4d¹⁰5s²5p⁵',        mass:126.9},
-  {z:54, sym:'Xe', name:'제논',    period:5, group:18, block:'p', config:'[Kr]4d¹⁰5s²5p⁶',        mass:131.3},
-  {z:55, sym:'Cs', name:'세슘',    period:6, group:1,  block:'s', config:'[Xe]6s¹',               mass:132.9},
-  {z:56, sym:'Ba', name:'바륨',    period:6, group:2,  block:'s', config:'[Xe]6s²',               mass:137.3},
-  {z:57, sym:'La', name:'란타넘',  period:6, group:3,  block:'f', config:'[Xe]5d¹6s²',            mass:138.9},
-  {z:58, sym:'Ce', name:'세륨',    period:6, group:null,block:'f', config:'[Xe]4f¹5d¹6s²',        mass:140.1},
-  {z:59, sym:'Pr', name:'프라세오디뮴',period:6,group:null,block:'f',config:'[Xe]4f³6s²',          mass:140.9},
-  {z:60, sym:'Nd', name:'네오디뮴',period:6, group:null,block:'f', config:'[Xe]4f⁴6s²',           mass:144.2},
-  {z:61, sym:'Pm', name:'프로메튬',period:6, group:null,block:'f', config:'[Xe]4f⁵6s²',           mass:145},
-  {z:62, sym:'Sm', name:'사마륨',  period:6, group:null,block:'f', config:'[Xe]4f⁶6s²',           mass:150.4},
-  {z:63, sym:'Eu', name:'유로퓸',  period:6, group:null,block:'f', config:'[Xe]4f⁷6s²',           mass:152.0},
-  {z:64, sym:'Gd', name:'가돌리늄',period:6, group:null,block:'f', config:'[Xe]4f⁷5d¹6s²',        mass:157.3},
-  {z:65, sym:'Tb', name:'터븀',    period:6, group:null,block:'f', config:'[Xe]4f⁹6s²',           mass:158.9},
-  {z:66, sym:'Dy', name:'디스프로슘',period:6,group:null,block:'f', config:'[Xe]4f¹⁰6s²',         mass:162.5},
-  {z:67, sym:'Ho', name:'홀뮴',    period:6, group:null,block:'f', config:'[Xe]4f¹¹6s²',          mass:164.9},
-  {z:68, sym:'Er', name:'어븀',    period:6, group:null,block:'f', config:'[Xe]4f¹²6s²',          mass:167.3},
-  {z:69, sym:'Tm', name:'툴륨',    period:6, group:null,block:'f', config:'[Xe]4f¹³6s²',          mass:168.9},
-  {z:70, sym:'Yb', name:'이터븀',  period:6, group:null,block:'f', config:'[Xe]4f¹⁴6s²',          mass:173.0},
-  {z:71, sym:'Lu', name:'루테튬',  period:6, group:3,  block:'d', config:'[Xe]4f¹⁴5d¹6s²',        mass:175.0},
-  {z:72, sym:'Hf', name:'하프늄',  period:6, group:4,  block:'d', config:'[Xe]4f¹⁴5d²6s²',        mass:178.5},
-  {z:73, sym:'Ta', name:'탄탈럼',  period:6, group:5,  block:'d', config:'[Xe]4f¹⁴5d³6s²',        mass:180.9},
-  {z:74, sym:'W',  name:'텅스텐',  period:6, group:6,  block:'d', config:'[Xe]4f¹⁴5d⁴6s²',        mass:183.8},
-  {z:75, sym:'Re', name:'레늄',    period:6, group:7,  block:'d', config:'[Xe]4f¹⁴5d⁵6s²',        mass:186.2},
-  {z:76, sym:'Os', name:'오스뮴',  period:6, group:8,  block:'d', config:'[Xe]4f¹⁴5d⁶6s²',        mass:190.2},
-  {z:77, sym:'Ir', name:'이리듐',  period:6, group:9,  block:'d', config:'[Xe]4f¹⁴5d⁷6s²',        mass:192.2},
-  {z:78, sym:'Pt', name:'백금',    period:6, group:10, block:'d', config:'[Xe]4f¹⁴5d⁹6s¹',        mass:195.1},
-  {z:79, sym:'Au', name:'금',      period:6, group:11, block:'d', config:'[Xe]4f¹⁴5d¹⁰6s¹',       mass:197.0},
-  {z:80, sym:'Hg', name:'수은',    period:6, group:12, block:'d', config:'[Xe]4f¹⁴5d¹⁰6s²',       mass:200.6},
-  {z:81, sym:'Tl', name:'탈륨',    period:6, group:13, block:'p', config:'[Xe]4f¹⁴5d¹⁰6s²6p¹',    mass:204.4},
-  {z:82, sym:'Pb', name:'납',      period:6, group:14, block:'p', config:'[Xe]4f¹⁴5d¹⁰6s²6p²',    mass:207.2},
-  {z:83, sym:'Bi', name:'비스무트',period:6, group:15, block:'p', config:'[Xe]4f¹⁴5d¹⁰6s²6p³',    mass:209.0},
-  {z:84, sym:'Po', name:'폴로늄',  period:6, group:16, block:'p', config:'[Xe]4f¹⁴5d¹⁰6s²6p⁴',    mass:209},
-  {z:85, sym:'At', name:'아스타틴',period:6, group:17, block:'p', config:'[Xe]4f¹⁴5d¹⁰6s²6p⁵',    mass:210},
-  {z:86, sym:'Rn', name:'라돈',    period:6, group:18, block:'p', config:'[Xe]4f¹⁴5d¹⁰6s²6p⁶',    mass:222},
-  {z:87, sym:'Fr', name:'프랑슘',  period:7, group:1,  block:'s', config:'[Rn]7s¹',               mass:223},
-  {z:88, sym:'Ra', name:'라듐',    period:7, group:2,  block:'s', config:'[Rn]7s²',               mass:226},
-  {z:89, sym:'Ac', name:'악티늄',  period:7, group:3,  block:'f', config:'[Rn]6d¹7s²',            mass:227},
-  {z:90, sym:'Th', name:'토륨',    period:7, group:null,block:'f', config:'[Rn]6d²7s²',           mass:232.0},
-  {z:91, sym:'Pa', name:'프로트악티늄',period:7,group:null,block:'f',config:'[Rn]5f²6d¹7s²',      mass:231.0},
-  {z:92, sym:'U',  name:'우라늄',  period:7, group:null,block:'f', config:'[Rn]5f³6d¹7s²',        mass:238.0},
-  {z:93, sym:'Np', name:'넵투늄',  period:7, group:null,block:'f', config:'[Rn]5f⁴6d¹7s²',        mass:237},
-  {z:94, sym:'Pu', name:'플루토늄',period:7, group:null,block:'f', config:'[Rn]5f⁶7s²',           mass:244},
-  {z:95, sym:'Am', name:'아메리슘',period:7, group:null,block:'f', config:'[Rn]5f⁷7s²',           mass:243},
-  {z:96, sym:'Cm', name:'퀴륨',    period:7, group:null,block:'f', config:'[Rn]5f⁷6d¹7s²',        mass:247},
-  {z:97, sym:'Bk', name:'버클륨',  period:7, group:null,block:'f', config:'[Rn]5f⁹7s²',           mass:247},
-  {z:98, sym:'Cf', name:'캘리포늄',period:7, group:null,block:'f', config:'[Rn]5f¹⁰7s²',          mass:251},
-  {z:99, sym:'Es', name:'아인슈타이늄',period:7,group:null,block:'f',config:'[Rn]5f¹¹7s²',        mass:252},
-  {z:100,sym:'Fm', name:'페르뮴',  period:7, group:null,block:'f', config:'[Rn]5f¹²7s²',          mass:257},
-  {z:101,sym:'Md', name:'멘델레븀',period:7, group:null,block:'f', config:'[Rn]5f¹³7s²',          mass:258},
-  {z:102,sym:'No', name:'노벨륨',  period:7, group:null,block:'f', config:'[Rn]5f¹⁴7s²',          mass:259},
-  {z:103,sym:'Lr', name:'로렌슘',  period:7, group:3,  block:'d', config:'[Rn]5f¹⁴7p¹',           mass:262},
-  {z:104,sym:'Rf', name:'러더포듐',period:7, group:4,  block:'d', config:'[Rn]5f¹⁴6d²7s²',        mass:265},
-  {z:105,sym:'Db', name:'더브늄',  period:7, group:5,  block:'d', config:'[Rn]5f¹⁴6d³7s²',        mass:268},
-  {z:106,sym:'Sg', name:'시보귬',  period:7, group:6,  block:'d', config:'[Rn]5f¹⁴6d⁴7s²',        mass:271},
-  {z:107,sym:'Bh', name:'보륨',    period:7, group:7,  block:'d', config:'[Rn]5f¹⁴6d⁵7s²',        mass:270},
-  {z:108,sym:'Hs', name:'하슘',    period:7, group:8,  block:'d', config:'[Rn]5f¹⁴6d⁶7s²',        mass:277},
-  {z:109,sym:'Mt', name:'마이트너륨',period:7,group:9, block:'d', config:'[Rn]5f¹⁴6d⁷7s²',        mass:276},
-  {z:110,sym:'Ds', name:'다름슈타튬',period:7,group:10,block:'d', config:'[Rn]5f¹⁴6d⁸7s²',        mass:281},
-  {z:111,sym:'Rg', name:'뢴트게늄',period:7, group:11, block:'d', config:'[Rn]5f¹⁴6d¹⁰7s¹',       mass:280},
-  {z:112,sym:'Cn', name:'코페르니슘',period:7,group:12,block:'d', config:'[Rn]5f¹⁴6d¹⁰7s²',       mass:285},
-  {z:113,sym:'Nh', name:'니호늄',  period:7, group:13, block:'p', config:'[Rn]5f¹⁴6d¹⁰7s²7p¹',    mass:284},
-  {z:114,sym:'Fl', name:'플레로븀',period:7, group:14, block:'p', config:'[Rn]5f¹⁴6d¹⁰7s²7p²',    mass:289},
-  {z:115,sym:'Mc', name:'모스코븀',period:7, group:15, block:'p', config:'[Rn]5f¹⁴6d¹⁰7s²7p³',    mass:288},
-  {z:116,sym:'Lv', name:'리버모륨',period:7, group:16, block:'p', config:'[Rn]5f¹⁴6d¹⁰7s²7p⁴',    mass:293},
-  {z:117,sym:'Ts', name:'테네신',  period:7, group:17, block:'p', config:'[Rn]5f¹⁴6d¹⁰7s²7p⁵',    mass:294},
-  {z:118,sym:'Og', name:'오가네손',period:7, group:18, block:'p', config:'[Rn]5f¹⁴6d¹⁰7s²7p⁶',    mass:294},
+  { z: 1  , sym: 'H' , name: '수소'    , period: 1, group: 1   , block: 's', config: '1s¹'               , mass: 1.008  , ex: false, rel: 0.0 , exNote: '', relNote: '' },
+  { z: 2  , sym: 'He', name: '헬륨'    , period: 1, group: 18  , block: 's', config: '1s²'               , mass: 4.003  , ex: false, rel: 0.0 , exNote: '', relNote: '' },
+  { z: 3  , sym: 'Li', name: '리튬'    , period: 2, group: 1   , block: 's', config: '[He]2s¹'           , mass: 6.941  , ex: false, rel: 0.01, exNote: '', relNote: '' },
+  { z: 4  , sym: 'Be', name: '베릴륨'   , period: 2, group: 2   , block: 's', config: '[He]2s²'           , mass: 9.012  , ex: false, rel: 0.01, exNote: '', relNote: '' },
+  { z: 5  , sym: 'B' , name: '붕소'    , period: 2, group: 13  , block: 'p', config: '[He]2s²2p¹'        , mass: 10.81  , ex: false, rel: 0.02, exNote: '', relNote: '' },
+  { z: 6  , sym: 'C' , name: '탄소'    , period: 2, group: 14  , block: 'p', config: '[He]2s²2p²'        , mass: 12.01  , ex: false, rel: 0.02, exNote: '', relNote: '' },
+  { z: 7  , sym: 'N' , name: '질소'    , period: 2, group: 15  , block: 'p', config: '[He]2s²2p³'        , mass: 14.01  , ex: false, rel: 0.03, exNote: '', relNote: '' },
+  { z: 8  , sym: 'O' , name: '산소'    , period: 2, group: 16  , block: 'p', config: '[He]2s²2p⁴'        , mass: 16.0   , ex: false, rel: 0.03, exNote: '', relNote: '' },
+  { z: 9  , sym: 'F' , name: '플루오린'  , period: 2, group: 17  , block: 'p', config: '[He]2s²2p⁵'        , mass: 19.0   , ex: false, rel: 0.04, exNote: '', relNote: '' },
+  { z: 10 , sym: 'Ne', name: '네온'    , period: 2, group: 18  , block: 'p', config: '[He]2s²2p⁶'        , mass: 20.18  , ex: false, rel: 0.04, exNote: '', relNote: '' },
+  { z: 11 , sym: 'Na', name: '나트륨'   , period: 3, group: 1   , block: 's', config: '[Ne]3s¹'           , mass: 22.99  , ex: false, rel: 0.05, exNote: '', relNote: '' },
+  { z: 12 , sym: 'Mg', name: '마그네슘'  , period: 3, group: 2   , block: 's', config: '[Ne]3s²'           , mass: 24.31  , ex: false, rel: 0.05, exNote: '', relNote: '' },
+  { z: 13 , sym: 'Al', name: '알루미늄'  , period: 3, group: 13  , block: 'p', config: '[Ne]3s²3p¹'        , mass: 26.98  , ex: false, rel: 0.06, exNote: '', relNote: '' },
+  { z: 14 , sym: 'Si', name: '규소'    , period: 3, group: 14  , block: 'p', config: '[Ne]3s²3p²'        , mass: 28.09  , ex: false, rel: 0.06, exNote: '', relNote: '' },
+  { z: 15 , sym: 'P' , name: '인'     , period: 3, group: 15  , block: 'p', config: '[Ne]3s²3p³'        , mass: 30.97  , ex: false, rel: 0.07, exNote: '', relNote: '' },
+  { z: 16 , sym: 'S' , name: '황'     , period: 3, group: 16  , block: 'p', config: '[Ne]3s²3p⁴'        , mass: 32.07  , ex: false, rel: 0.07, exNote: '', relNote: '' },
+  { z: 17 , sym: 'Cl', name: '염소'    , period: 3, group: 17  , block: 'p', config: '[Ne]3s²3p⁵'        , mass: 35.45  , ex: false, rel: 0.08, exNote: '', relNote: '' },
+  { z: 18 , sym: 'Ar', name: '아르곤'   , period: 3, group: 18  , block: 'p', config: '[Ne]3s²3p⁶'        , mass: 39.95  , ex: false, rel: 0.08, exNote: '', relNote: '' },
+  { z: 19 , sym: 'K' , name: '칼륨'    , period: 4, group: 1   , block: 's', config: '[Ar]4s¹'           , mass: 39.1   , ex: false, rel: 0.09, exNote: '', relNote: '' },
+  { z: 20 , sym: 'Ca', name: '칼슘'    , period: 4, group: 2   , block: 's', config: '[Ar]4s²'           , mass: 40.08  , ex: false, rel: 0.09, exNote: '', relNote: '' },
+  { z: 21 , sym: 'Sc', name: '스칸듐'   , period: 4, group: 3   , block: 'd', config: '[Ar]3d¹4s²'        , mass: 44.96  , ex: false, rel: 0.1 , exNote: '', relNote: '' },
+  { z: 22 , sym: 'Ti', name: '타이타늄'  , period: 4, group: 4   , block: 'd', config: '[Ar]3d²4s²'        , mass: 47.87  , ex: false, rel: 0.11, exNote: '', relNote: '' },
+  { z: 23 , sym: 'V' , name: '바나듐'   , period: 4, group: 5   , block: 'd', config: '[Ar]3d³4s²'        , mass: 50.94  , ex: false, rel: 0.12, exNote: '', relNote: '' },
+  { z: 24 , sym: 'Cr', name: '크로뮴'   , period: 4, group: 6   , block: 'd', config: '[Ar]3d⁵4s¹'        , mass: 52.0   , ex: true , rel: 0.13, exNote: '예상 3d⁴4s²→실제 3d⁵4s¹. d⁵ 반충전 달성으로 교환 에너지 E_ex 최대화. 홀전자 5개의 완전 대칭이 에너지 이득 압도.', relNote: '' },
+  { z: 25 , sym: 'Mn', name: '망가니즈'  , period: 4, group: 7   , block: 'd', config: '[Ar]3d⁵4s²'        , mass: 54.94  , ex: false, rel: 0.14, exNote: '', relNote: '' },
+  { z: 26 , sym: 'Fe', name: '철'     , period: 4, group: 8   , block: 'd', config: '[Ar]3d⁶4s²'        , mass: 55.85  , ex: false, rel: 0.15, exNote: '', relNote: '' },
+  { z: 27 , sym: 'Co', name: '코발트'   , period: 4, group: 9   , block: 'd', config: '[Ar]3d⁷4s²'        , mass: 58.93  , ex: false, rel: 0.15, exNote: '', relNote: '' },
+  { z: 28 , sym: 'Ni', name: '니켈'    , period: 4, group: 10  , block: 'd', config: '[Ar]3d⁸4s²'        , mass: 58.69  , ex: false, rel: 0.16, exNote: '', relNote: '' },
+  { z: 29 , sym: 'Cu', name: '구리'    , period: 4, group: 11  , block: 'd', config: '[Ar]3d¹⁰4s¹'       , mass: 63.55  , ex: true , rel: 0.17, exNote: '예상 3d⁹4s²→실제 3d¹⁰4s¹. d¹⁰ 완전충전 달성. 완전히 채워진 d 오비탈의 교환·쌍형성 에너지 합산 이득이 4s 손실 초과.', relNote: '' },
+  { z: 30 , sym: 'Zn', name: '아연'    , period: 4, group: 12  , block: 'd', config: '[Ar]3d¹⁰4s²'       , mass: 65.38  , ex: false, rel: 0.17, exNote: '', relNote: '' },
+  { z: 31 , sym: 'Ga', name: '갈륨'    , period: 4, group: 13  , block: 'p', config: '[Ar]3d¹⁰4s²4p¹'    , mass: 69.72  , ex: false, rel: 0.18, exNote: '', relNote: '' },
+  { z: 32 , sym: 'Ge', name: '저마늄'   , period: 4, group: 14  , block: 'p', config: '[Ar]3d¹⁰4s²4p²'    , mass: 72.63  , ex: false, rel: 0.18, exNote: '', relNote: '' },
+  { z: 33 , sym: 'As', name: '비소'    , period: 4, group: 15  , block: 'p', config: '[Ar]3d¹⁰4s²4p³'    , mass: 74.92  , ex: false, rel: 0.19, exNote: '', relNote: '' },
+  { z: 34 , sym: 'Se', name: '셀레늄'   , period: 4, group: 16  , block: 'p', config: '[Ar]3d¹⁰4s²4p⁴'    , mass: 78.97  , ex: false, rel: 0.19, exNote: '', relNote: '' },
+  { z: 35 , sym: 'Br', name: '브로민'   , period: 4, group: 17  , block: 'p', config: '[Ar]3d¹⁰4s²4p⁵'    , mass: 79.9   , ex: false, rel: 0.22, exNote: '', relNote: '' },
+  { z: 36 , sym: 'Kr', name: '크립톤'   , period: 4, group: 18  , block: 'p', config: '[Ar]3d¹⁰4s²4p⁶'    , mass: 83.8   , ex: false, rel: 0.22, exNote: '', relNote: '' },
+  { z: 37 , sym: 'Rb', name: '루비듐'   , period: 5, group: 1   , block: 's', config: '[Kr]5s¹'           , mass: 85.47  , ex: false, rel: 0.24, exNote: '', relNote: '' },
+  { z: 38 , sym: 'Sr', name: '스트론튬'  , period: 5, group: 2   , block: 's', config: '[Kr]5s²'           , mass: 87.62  , ex: false, rel: 0.24, exNote: '', relNote: '' },
+  { z: 39 , sym: 'Y' , name: '이트륨'   , period: 5, group: 3   , block: 'd', config: '[Kr]4d¹5s²'        , mass: 88.91  , ex: false, rel: 0.25, exNote: '', relNote: '' },
+  { z: 40 , sym: 'Zr', name: '지르코늄'  , period: 5, group: 4   , block: 'd', config: '[Kr]4d²5s²'        , mass: 91.22  , ex: false, rel: 0.26, exNote: '', relNote: '' },
+  { z: 41 , sym: 'Nb', name: '나이오븀'  , period: 5, group: 5   , block: 'd', config: '[Kr]4d⁴5s¹'        , mass: 92.91  , ex: true , rel: 0.27, exNote: '예상 4d³5s²→실제 4d⁴5s¹. Cr과 유사 메커니즘. d 오비탈 준충전 접근으로 교환 에너지 이득.', relNote: '' },
+  { z: 42 , sym: 'Mo', name: '몰리브데넘' , period: 5, group: 6   , block: 'd', config: '[Kr]4d⁵5s¹'        , mass: 95.96  , ex: true , rel: 0.28, exNote: '예상 4d⁴5s²→실제 4d⁵5s¹. Cr의 5주기 동족. d⁵ 반충전으로 교환 에너지 최대. E_ex = K×C(5,2)=10K.', relNote: '' },
+  { z: 43 , sym: 'Tc', name: '테크네튬'  , period: 5, group: 7   , block: 'd', config: '[Kr]4d⁵5s²'        , mass: 98.0   , ex: false, rel: 0.29, exNote: '', relNote: '' },
+  { z: 44 , sym: 'Ru', name: '루테늄'   , period: 5, group: 8   , block: 'd', config: '[Kr]4d⁷5s¹'        , mass: 101.1  , ex: true , rel: 0.30, exNote: '예상 4d⁶5s²→실제 4d⁷5s¹. d/s 에너지 간격 축소 + 교환 에너지 결합.', relNote: '' },
+  { z: 45 , sym: 'Rh', name: '로듐'    , period: 5, group: 9   , block: 'd', config: '[Kr]4d⁸5s¹'        , mass: 102.9  , ex: true , rel: 0.31, exNote: '예상 4d⁷5s²→실제 4d⁸5s¹. d 충전 최대화 경향.', relNote: '' },
+  { z: 46 , sym: 'Pd', name: '팔라듐'   , period: 5, group: 10  , block: 'd', config: '[Kr]4d¹⁰'          , mass: 106.4  , ex: true , rel: 0.32, exNote: '예상 4d⁹5s¹→실제 4d¹⁰(5s 완전 비움). d¹⁰ 완전충전의 에너지 이득이 5s 점유 이득 압도. 유일하게 5s=0.', relNote: '' },
+  { z: 47 , sym: 'Ag', name: '은'     , period: 5, group: 11  , block: 'd', config: '[Kr]4d¹⁰5s¹'       , mass: 107.9  , ex: true , rel: 0.33, exNote: '예상 4d⁹5s²→실제 4d¹⁰5s¹. Cu의 5주기 동족. d¹⁰ 완전충전 이득.', relNote: '' },
+  { z: 48 , sym: 'Cd', name: '카드뮴'   , period: 5, group: 12  , block: 'd', config: '[Kr]4d¹⁰5s²'       , mass: 112.4  , ex: false, rel: 0.34, exNote: '', relNote: '' },
+  { z: 49 , sym: 'In', name: '인듐'    , period: 5, group: 13  , block: 'p', config: '[Kr]4d¹⁰5s²5p¹'    , mass: 114.8  , ex: false, rel: 0.35, exNote: '', relNote: '' },
+  { z: 50 , sym: 'Sn', name: '주석'    , period: 5, group: 14  , block: 'p', config: '[Kr]4d¹⁰5s²5p²'    , mass: 118.7  , ex: false, rel: 0.36, exNote: '', relNote: '' },
+  { z: 51 , sym: 'Sb', name: '안티모니'  , period: 5, group: 15  , block: 'p', config: '[Kr]4d¹⁰5s²5p³'    , mass: 121.8  , ex: false, rel: 0.37, exNote: '', relNote: '' },
+  { z: 52 , sym: 'Te', name: '텔루륨'   , period: 5, group: 16  , block: 'p', config: '[Kr]4d¹⁰5s²5p⁴'    , mass: 127.6  , ex: false, rel: 0.38, exNote: '', relNote: '' },
+  { z: 53 , sym: 'I' , name: '아이오딘'  , period: 5, group: 17  , block: 'p', config: '[Kr]4d¹⁰5s²5p⁵'    , mass: 126.9  , ex: false, rel: 0.39, exNote: '', relNote: '' },
+  { z: 54 , sym: 'Xe', name: '제논'    , period: 5, group: 18  , block: 'p', config: '[Kr]4d¹⁰5s²5p⁶'    , mass: 131.3  , ex: false, rel: 0.40, exNote: '', relNote: '' },
+  { z: 55 , sym: 'Cs', name: '세슘'    , period: 6, group: 1   , block: 's', config: '[Xe]6s¹'           , mass: 132.9  , ex: false, rel: 0.42, exNote: '', relNote: '' },
+  { z: 56 , sym: 'Ba', name: '바륨'    , period: 6, group: 2   , block: 's', config: '[Xe]6s²'           , mass: 137.3  , ex: false, rel: 0.43, exNote: '', relNote: '' },
+  { z: 57 , sym: 'La', name: '란타넘'   , period: 6, group: 3   , block: 'f', config: '[Xe]5d¹6s²'        , mass: 138.9  , ex: false, rel: 0.45, exNote: '', relNote: '' },
+  { z: 58 , sym: 'Ce', name: '세륨'    , period: 6, group: null, block: 'f', config: '[Xe]4f¹5d¹6s²'     , mass: 140.1  , ex: false, rel: 0.46, exNote: '', relNote: '' },
+  { z: 59 , sym: 'Pr', name: '프라세오디뮴', period: 6, group: null, block: 'f', config: '[Xe]4f³6s²'        , mass: 140.9  , ex: false, rel: 0.47, exNote: '', relNote: '' },
+  { z: 60 , sym: 'Nd', name: '네오디뮴'  , period: 6, group: null, block: 'f', config: '[Xe]4f⁴6s²'        , mass: 144.2  , ex: false, rel: 0.48, exNote: '', relNote: '' },
+  { z: 61 , sym: 'Pm', name: '프로메튬'  , period: 6, group: null, block: 'f', config: '[Xe]4f⁵6s²'        , mass: 145.0  , ex: false, rel: 0.49, exNote: '', relNote: '' },
+  { z: 62 , sym: 'Sm', name: '사마륨'   , period: 6, group: null, block: 'f', config: '[Xe]4f⁶6s²'        , mass: 150.4  , ex: false, rel: 0.50, exNote: '', relNote: '' },
+  { z: 63 , sym: 'Eu', name: '유로퓸'   , period: 6, group: null, block: 'f', config: '[Xe]4f⁷6s²'        , mass: 152.0  , ex: false, rel: 0.51, exNote: '', relNote: '' },
+  { z: 64 , sym: 'Gd', name: '가돌리늄'  , period: 6, group: null, block: 'f', config: '[Xe]4f⁷5d¹6s²'     , mass: 157.3  , ex: true , rel: 0.52, exNote: '예상 4f⁸6s²→실제 4f⁷5d¹6s². f⁷ 반충전(7홀전자) 최대 교환 에너지 + 5d 분리 이득.', relNote: '' },
+  { z: 65 , sym: 'Tb', name: '터븀'    , period: 6, group: null, block: 'f', config: '[Xe]4f⁹6s²'        , mass: 158.9  , ex: false, rel: 0.53, exNote: '', relNote: '' },
+  { z: 66 , sym: 'Dy', name: '디스프로슘' , period: 6, group: null, block: 'f', config: '[Xe]4f¹⁰6s²'       , mass: 162.5  , ex: false, rel: 0.54, exNote: '', relNote: '' },
+  { z: 67 , sym: 'Ho', name: '홀뮴'    , period: 6, group: null, block: 'f', config: '[Xe]4f¹¹6s²'       , mass: 164.9  , ex: false, rel: 0.55, exNote: '', relNote: '' },
+  { z: 68 , sym: 'Er', name: '어븀'    , period: 6, group: null, block: 'f', config: '[Xe]4f¹²6s²'       , mass: 167.3  , ex: false, rel: 0.56, exNote: '', relNote: '' },
+  { z: 69 , sym: 'Tm', name: '툴륨'    , period: 6, group: null, block: 'f', config: '[Xe]4f¹³6s²'       , mass: 168.9  , ex: false, rel: 0.57, exNote: '', relNote: '' },
+  { z: 70 , sym: 'Yb', name: '이터븀'   , period: 6, group: null, block: 'f', config: '[Xe]4f¹⁴6s²'       , mass: 173.0  , ex: false, rel: 0.58, exNote: '', relNote: '' },
+  { z: 71 , sym: 'Lu', name: '루테튬'   , period: 6, group: 3   , block: 'd', config: '[Xe]4f¹⁴5d¹6s²'    , mass: 175.0  , ex: false, rel: 0.60, exNote: '', relNote: '' },
+  { z: 72 , sym: 'Hf', name: '하프늄'   , period: 6, group: 4   , block: 'd', config: '[Xe]4f¹⁴5d²6s²'    , mass: 178.5  , ex: false, rel: 0.62, exNote: '', relNote: '' },
+  { z: 73 , sym: 'Ta', name: '탄탈럼'   , period: 6, group: 5   , block: 'd', config: '[Xe]4f¹⁴5d³6s²'    , mass: 180.9  , ex: false, rel: 0.64, exNote: '', relNote: '' },
+  { z: 74 , sym: 'W' , name: '텅스텐'   , period: 6, group: 6   , block: 'd', config: '[Xe]4f¹⁴5d⁴6s²'    , mass: 183.8  , ex: false, rel: 0.66, exNote: '', relNote: '' },
+  { z: 75 , sym: 'Re', name: '레늄'    , period: 6, group: 7   , block: 'd', config: '[Xe]4f¹⁴5d⁵6s²'    , mass: 186.2  , ex: false, rel: 0.68, exNote: '', relNote: '' },
+  { z: 76 , sym: 'Os', name: '오스뮴'   , period: 6, group: 8   , block: 'd', config: '[Xe]4f¹⁴5d⁶6s²'    , mass: 190.2  , ex: false, rel: 0.70, exNote: '', relNote: '' },
+  { z: 77 , sym: 'Ir', name: '이리듐'   , period: 6, group: 9   , block: 'd', config: '[Xe]4f¹⁴5d⁷6s²'    , mass: 192.2  , ex: false, rel: 0.72, exNote: '', relNote: '' },
+  { z: 78 , sym: 'Pt', name: '백금'    , period: 6, group: 10  , block: 'd', config: '[Xe]4f¹⁴5d⁹6s¹'    , mass: 195.1  , ex: true , rel: 0.73, exNote: '예상 5d⁸6s²→실제 5d⁹6s¹. 교환 에너지 + 상대론적 6s 수축의 복합 작용. 6s 반경 감소로 5d-6s 에너지 역전.', relNote: '상대론적 6s 수축: 6s 오비탈이 핵쪽으로 바짝 수축되어 에너지 준위 저하. 5d와의 에너지 간격이 좁아져 전자 이동 촉진.' },
+  { z: 79 , sym: 'Au', name: '금'     , period: 6, group: 11  , block: 'd', config: '[Xe]4f¹⁴5d¹⁰6s¹'   , mass: 197.0  , ex: true , rel: 0.80, exNote: '예상 5d⁹6s²→실제 5d¹⁰6s¹. d¹⁰ 완전충전 + 강한 상대론적 6s 수축의 협력 효과. 금의 노란색과 화학적 불활성의 원인.', relNote: '강한 상대론적 6s 수축: 금 6s 오비탈 반경이 비상대론적 예측보다 ~20% 감소. 4f→5d→6s 간접 팽창 동시 작용. 금의 색깔·전도도·화학 불활성 모두 이 효과의 결과.' },
+  { z: 80 , sym: 'Hg', name: '수은'    , period: 6, group: 12  , block: 'd', config: '[Xe]4f¹⁴5d¹⁰6s²'   , mass: 200.6  , ex: false, rel: 0.78, exNote: '', relNote: '상대론적 6s 수축으로 6s-6p 에너지 간격 증가. 수은이 상온에서 액체인 이유: 상대론적 수축이 금속 결합력 약화.' },
+  { z: 81 , sym: 'Tl', name: '탈륨'    , period: 6, group: 13  , block: 'p', config: '[Xe]4f¹⁴5d¹⁰6s²6p¹', mass: 204.4  , ex: false, rel: 0.72, exNote: '', relNote: '' },
+  { z: 82 , sym: 'Pb', name: '납'     , period: 6, group: 14  , block: 'p', config: '[Xe]4f¹⁴5d¹⁰6s²6p²', mass: 207.2  , ex: false, rel: 0.70, exNote: '', relNote: '' },
+  { z: 83 , sym: 'Bi', name: '비스무트'  , period: 6, group: 15  , block: 'p', config: '[Xe]4f¹⁴5d¹⁰6s²6p³', mass: 209.0  , ex: false, rel: 0.68, exNote: '', relNote: '' },
+  { z: 84 , sym: 'Po', name: '폴로늄'   , period: 6, group: 16  , block: 'p', config: '[Xe]4f¹⁴5d¹⁰6s²6p⁴', mass: 209.0  , ex: false, rel: 0.66, exNote: '', relNote: '' },
+  { z: 85 , sym: 'At', name: '아스타틴'  , period: 6, group: 17  , block: 'p', config: '[Xe]4f¹⁴5d¹⁰6s²6p⁵', mass: 210.0  , ex: false, rel: 0.64, exNote: '', relNote: '' },
+  { z: 86 , sym: 'Rn', name: '라돈'    , period: 6, group: 18  , block: 'p', config: '[Xe]4f¹⁴5d¹⁰6s²6p⁶', mass: 222.0  , ex: false, rel: 0.62, exNote: '', relNote: '' },
+  { z: 87 , sym: 'Fr', name: '프랑슘'   , period: 7, group: 1   , block: 's', config: '[Rn]7s¹'           , mass: 223.0  , ex: false, rel: 0.65, exNote: '', relNote: '' },
+  { z: 88 , sym: 'Ra', name: '라듐'    , period: 7, group: 2   , block: 's', config: '[Rn]7s²'           , mass: 226.0  , ex: false, rel: 0.66, exNote: '', relNote: '' },
+  { z: 89 , sym: 'Ac', name: '악티늄'   , period: 7, group: 3   , block: 'f', config: '[Rn]6d¹7s²'        , mass: 227.0  , ex: false, rel: 0.68, exNote: '', relNote: '' },
+  { z: 90 , sym: 'Th', name: '토륨'    , period: 7, group: null, block: 'f', config: '[Rn]6d²7s²'        , mass: 232.0  , ex: false, rel: 0.70, exNote: '', relNote: '' },
+  { z: 91 , sym: 'Pa', name: '프로트악티늄', period: 7, group: null, block: 'f', config: '[Rn]5f²6d¹7s²'     , mass: 231.0  , ex: false, rel: 0.72, exNote: '', relNote: '' },
+  { z: 92 , sym: 'U' , name: '우라늄'   , period: 7, group: null, block: 'f', config: '[Rn]5f³6d¹7s²'     , mass: 238.0  , ex: false, rel: 0.74, exNote: '', relNote: '' },
+  { z: 93 , sym: 'Np', name: '넵투늄'   , period: 7, group: null, block: 'f', config: '[Rn]5f⁴6d¹7s²'     , mass: 237.0  , ex: false, rel: 0.75, exNote: '', relNote: '' },
+  { z: 94 , sym: 'Pu', name: '플루토늄'  , period: 7, group: null, block: 'f', config: '[Rn]5f⁶7s²'        , mass: 244.0  , ex: false, rel: 0.77, exNote: '', relNote: '' },
+  { z: 95 , sym: 'Am', name: '아메리슘'  , period: 7, group: null, block: 'f', config: '[Rn]5f⁷7s²'        , mass: 243.0  , ex: false, rel: 0.78, exNote: '', relNote: '' },
+  { z: 96 , sym: 'Cm', name: '퀴륨'    , period: 7, group: null, block: 'f', config: '[Rn]5f⁷6d¹7s²'     , mass: 247.0  , ex: true , rel: 0.79, exNote: '예상 5f⁸7s²→실제 5f⁷6d¹7s². Gd와 동일 메커니즘. f⁷ 반충전 최대 교환 에너지.', relNote: '' },
+  { z: 97 , sym: 'Bk', name: '버클륨'   , period: 7, group: null, block: 'f', config: '[Rn]5f⁹7s²'        , mass: 247.0  , ex: false, rel: 0.80, exNote: '', relNote: '' },
+  { z: 98 , sym: 'Cf', name: '캘리포늄'  , period: 7, group: null, block: 'f', config: '[Rn]5f¹⁰7s²'       , mass: 251.0  , ex: false, rel: 0.81, exNote: '', relNote: '' },
+  { z: 99 , sym: 'Es', name: '아인슈타이늄', period: 7, group: null, block: 'f', config: '[Rn]5f¹¹7s²'       , mass: 252.0  , ex: false, rel: 0.82, exNote: '', relNote: '' },
+  { z: 100, sym: 'Fm', name: '페르뮴'   , period: 7, group: null, block: 'f', config: '[Rn]5f¹²7s²'       , mass: 257.0  , ex: false, rel: 0.83, exNote: '', relNote: '' },
+  { z: 101, sym: 'Md', name: '멘델레븀'  , period: 7, group: null, block: 'f', config: '[Rn]5f¹³7s²'       , mass: 258.0  , ex: false, rel: 0.84, exNote: '', relNote: '' },
+  { z: 102, sym: 'No', name: '노벨륨'   , period: 7, group: null, block: 'f', config: '[Rn]5f¹⁴7s²'       , mass: 259.0  , ex: false, rel: 0.85, exNote: '', relNote: '' },
+  { z: 103, sym: 'Lr', name: '로렌슘'   , period: 7, group: 3   , block: 'd', config: '[Rn]5f¹⁴7p¹'       , mass: 262.0  , ex: true , rel: 0.90, exNote: '예상 5f¹⁴6d¹7s²→실제 5f¹⁴7p¹. 상대론적 7s 수축으로 7s 준위 크게 하강, 7p가 6d보다 낮아지는 에너지 역전 발생.', relNote: '극단적 상대론적 효과: 7s 오비탈 직접 수축 + 6d 간접 팽창으로 6d-7p 에너지 서열 역전. Dirac 방정식으로만 설명 가능한 배치.' },
+  { z: 104, sym: 'Rf', name: '러더포듐'  , period: 7, group: 4   , block: 'd', config: '[Rn]5f¹⁴6d²7s²'    , mass: 265.0  , ex: false, rel: 0.88, exNote: '', relNote: '상대론적 효과로 6d·7s 에너지 준위 변동' },
+  { z: 105, sym: 'Db', name: '더브늄'   , period: 7, group: 5   , block: 'd', config: '[Rn]5f¹⁴6d³7s²'    , mass: 268.0  , ex: false, rel: 0.87, exNote: '', relNote: '' },
+  { z: 106, sym: 'Sg', name: '시보귬'   , period: 7, group: 6   , block: 'd', config: '[Rn]5f¹⁴6d⁴7s²'    , mass: 271.0  , ex: false, rel: 0.86, exNote: '', relNote: '' },
+  { z: 107, sym: 'Bh', name: '보륨'    , period: 7, group: 7   , block: 'd', config: '[Rn]5f¹⁴6d⁵7s²'    , mass: 270.0  , ex: false, rel: 0.85, exNote: '', relNote: '' },
+  { z: 108, sym: 'Hs', name: '하슘'    , period: 7, group: 8   , block: 'd', config: '[Rn]5f¹⁴6d⁶7s²'    , mass: 277.0  , ex: false, rel: 0.85, exNote: '', relNote: '' },
+  { z: 109, sym: 'Mt', name: '마이트너륨' , period: 7, group: 9   , block: 'd', config: '[Rn]5f¹⁴6d⁷7s²'    , mass: 276.0  , ex: false, rel: 0.84, exNote: '', relNote: '' },
+  { z: 110, sym: 'Ds', name: '다름슈타튬' , period: 7, group: 10  , block: 'd', config: '[Rn]5f¹⁴6d⁸7s²'    , mass: 281.0  , ex: false, rel: 0.84, exNote: '', relNote: '' },
+  { z: 111, sym: 'Rg', name: '뢴트게늄'  , period: 7, group: 11  , block: 'd', config: '[Rn]5f¹⁴6d¹⁰7s¹'   , mass: 280.0  , ex: true , rel: 0.84, exNote: 'Au의 7주기 동족. d¹⁰ 완전충전 + 상대론적 7s 수축 협력.', relNote: 'Au와 유사한 상대론적 패턴. 7s 수축이 6d보다 더 극심.' },
+  { z: 112, sym: 'Cn', name: '코페르니슘' , period: 7, group: 12  , block: 'd', config: '[Rn]5f¹⁴6d¹⁰7s²'   , mass: 285.0  , ex: false, rel: 0.83, exNote: '', relNote: 'Hg와 유사 상대론적 거동 예측' },
+  { z: 113, sym: 'Nh', name: '니호늄'   , period: 7, group: 13  , block: 'p', config: '[Rn]5f¹⁴6d¹⁰7s²7p¹', mass: 284.0  , ex: false, rel: 0.82, exNote: '', relNote: '' },
+  { z: 114, sym: 'Fl', name: '플레로븀'  , period: 7, group: 14  , block: 'p', config: '[Rn]5f¹⁴6d¹⁰7s²7p²', mass: 289.0  , ex: false, rel: 0.81, exNote: '', relNote: '' },
+  { z: 115, sym: 'Mc', name: '모스코븀'  , period: 7, group: 15  , block: 'p', config: '[Rn]5f¹⁴6d¹⁰7s²7p³', mass: 288.0  , ex: false, rel: 0.80, exNote: '', relNote: '' },
+  { z: 116, sym: 'Lv', name: '리버모륨'  , period: 7, group: 16  , block: 'p', config: '[Rn]5f¹⁴6d¹⁰7s²7p⁴', mass: 293.0  , ex: false, rel: 0.79, exNote: '', relNote: '' },
+  { z: 117, sym: 'Ts', name: '테네신'   , period: 7, group: 17  , block: 'p', config: '[Rn]5f¹⁴6d¹⁰7s²7p⁵', mass: 294.0  , ex: false, rel: 0.78, exNote: '', relNote: '' },
+  { z: 118, sym: 'Og', name: '오가네손'  , period: 7, group: 18  , block: 'p', config: '[Rn]5f¹⁴6d¹⁰7s²7p⁶', mass: 294.0  , ex: false, rel: 0.77, exNote: '', relNote: '' },
 ];
 
-// orbital colors
-const OC = { s:'#f5a623', p:'#4fc3f7', d:'#81c784', f:'#ce93d8', g:'#ffb74d' };
+const OC = { s: '#f5a94a', p: '#4fc3f7', d: '#72d48a', f: '#ce93d8', g: '#ffa726' };
 
 // ═══════════════════════════════════════════
-// Parse electron config → orbital layers
+// ELECTRON CONFIGURATION PARSER
 // ═══════════════════════════════════════════
 function parseConfig(cfg) {
-  // strip noble gas core
-  const stripped = cfg.replace(/\[[A-Za-z]+\]/,'');
+  const stripped = cfg.replace(/\[[A-Za-z]+\]/, '');
   const layers = [];
-  const re = /(\d)([spdf])([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g;
-  const sup = {'⁰':0,'¹':1,'²':2,'³':3,'⁴':4,'⁵':5,'⁶':6,'⁷':7,'⁸':8,'⁹':9,'¹⁰':10,'¹¹':11,'¹²':12,'¹³':13,'¹⁴':14};
+  const re = /(\d)([spdfg])([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g;
+  const sup = { '⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9 };
+  
   let m;
-  while((m = re.exec(stripped)) !== null){
+  while ((m = re.exec(stripped)) !== null) {
     const n = parseInt(m[1]);
     const type = m[2];
     const eStr = m[3];
+    
+    // Multi-digit superscript parser (e.g. ¹⁰ -> 10, ¹⁴ -> 14)
     let e = 0;
-    // handle multi-char superscripts
-    let i=0;
-    while(i < eStr.length){
-      if(i+1 < eStr.length && sup[eStr[i]+eStr[i+1]] !== undefined){
-        e = e*10 + sup[eStr[i]+eStr[i+1]]; i+=2;
-      } else {
-        e = e*10 + (sup[eStr[i]]||0); i++;
-      }
+    for (const char of eStr) {
+      e = e * 10 + (sup[char] !== undefined ? sup[char] : 0);
     }
-    if(e===0) e = sup[eStr]||1;
-    const l = {s:0,p:1,d:2,f:3,g:4}[type];
+    
+    const l = { s: 0, p: 1, d: 2, f: 3, g: 4 }[type];
     layers.push({ n, type, l, electrons: e });
   }
   return layers;
 }
 
-// ═══════════════════════════════════════════
-// BUILD PERIODIC TABLE
-// ═══════════════════════════════════════════
-const ptGrid = document.getElementById('ptGrid');
-
-// Position map [z] = {row, col} (1-indexed)
-function getPos(el) {
-  const {period: p, group: g, block: b, z} = el;
-  if(b==='f'){
-    // lanthanides 57-71 => row 9 (period 6 series), col z-57+3 = col 3..17
-    // actinides 89-103  => row 10, col z-89+3
-    if(z>=57 && z<=71) return {row:9, col: z-57+3};
-    if(z>=89 && z<=103) return {row:10, col: z-89+3};
-  }
-  return {row: p, col: g};
-}
-
-// 10 rows: 7 main + blank + 2 f-block
-const ROWS = 10, COLS = 18;
-const grid = Array.from({length:ROWS+1}, ()=>Array(COLS+1).fill(null));
-
-ELEMENTS.forEach(el => {
-  const pos = getPos(el);
-  if(pos && pos.row <= ROWS && pos.col >= 1 && pos.col <= COLS){
-    grid[pos.row][pos.col] = el;
-  }
-});
-
-// render
-for(let row=1; row<=ROWS; row++){
-  if(row===8){
-    // gap row
-    for(let c=1;c<=COLS;c++){
-      const div=document.createElement('div');
-      div.className='pt-cell empty';
-      ptGrid.appendChild(div);
-    }
-    continue;
-  }
-  for(let col=1; col<=COLS; col++){
-    const el = grid[row][col];
-    if(!el){
-      const div=document.createElement('div');
-      div.className='pt-cell empty';
-      ptGrid.appendChild(div);
-    } else {
-      const div=document.createElement('div');
-      div.className=`pt-cell ${el.block}-block`;
-      div.id=`el-${el.z}`;
-      div.innerHTML=`<span class="sym">${el.sym}</span><span class="num">${el.z}</span>`;
-      div.title=`${el.name} (${el.z})`;
-      div.addEventListener('click',()=>selectElement(el));
-      ptGrid.appendChild(div);
-    }
-  }
+// Exchange energy calculator C(n, 2)
+function exchangeEnergy(n) {
+  return n > 1 ? (n * (n - 1)) / 2 : 0;
 }
 
 // ═══════════════════════════════════════════
-// ORBITAL CANVAS RENDERER
+// BUILD PERIODIC TABLE GRID
 // ═══════════════════════════════════════════
-const canvas = document.getElementById('orbitalCanvas');
-const ctx = canvas.getContext('2d');
-const CX = canvas.width/2, CY = canvas.height/2;
+function getGridPosition(el) {
+  const { period: p, group: g, block: b, z } = el;
+  if (b === 'f') {
+    // Lanthanides (57-71) -> Row 9, Columns 3..17
+    if (z >= 57 && z <= 71) return { r: 9, c: z - 57 + 3 };
+    // Actinides (89-103) -> Row 10, Columns 3..17
+    if (z >= 89 && z <= 103) return { r: 10, c: z - 89 + 3 };
+  }
+  return { r: p, c: g };
+}
 
+function buildPeriodicTable() {
+  const ptGrid = document.getElementById('ptGrid');
+  const ROWS = 10;
+  const COLS = 18;
+  
+  const grid = Array.from({ length: ROWS + 1 }, () => Array(COLS + 1).fill(null));
+  
+  ELEMENTS.forEach(el => {
+    const pos = getGridPosition(el);
+    if (pos && pos.r <= ROWS && pos.c >= 1 && pos.c <= COLS) {
+      grid[pos.r][pos.c] = el;
+    }
+  });
+  
+  for (let r = 1; r <= ROWS; r++) {
+    if (r === 8) {
+      // Gap spacing row
+      for (let c = 1; c <= COLS; c++) {
+        const div = document.createElement('div');
+        div.className = 'pt-cell empty';
+        ptGrid.appendChild(div);
+      }
+      continue;
+    }
+    
+    for (let c = 1; c <= COLS; c++) {
+      const el = grid[r][c];
+      const div = document.createElement('div');
+      
+      if (!el) {
+        div.className = 'pt-cell empty';
+      } else {
+        div.className = `pt-cell ${el.block}-block`;
+        if (el.ex) div.classList.add('has-ex');
+        if (el.rel > 0.5) div.classList.add('has-rel');
+        
+        div.id = `el-cell-${el.z}`;
+        div.innerHTML = `<span class="sym">${el.sym}</span><span class="num">${el.z}</span>`;
+        
+        // Ex/Rel visual dots
+        if (el.ex) div.innerHTML += '<div class="ex-dot" title="예외 배치의 오비탈"></div>';
+        if (el.rel > 0.5) div.innerHTML += '<div class="rel-dot" title="강한 상대론적 수축/팽창 효과"></div>';
+        
+        div.title = `${el.name} (${el.sym}, Z=${el.z})`;
+        div.addEventListener('click', () => selectElement(el));
+      }
+      ptGrid.appendChild(div);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// DUAL CANVAS SIMULATION RENDERER
+// ═══════════════════════════════════════════
+const mainCanvas = document.getElementById('mainCanvas');
+const relCanvas = document.getElementById('relCanvas');
+
+let mCtx, rCtx;
 let animAngle = 0;
 let animRunning = false;
 let animId = null;
 let currentLayers = [];
 let layerVisible = {};
+let selectedEl = null;
 
-function toggleAnim(){
+// Handle rotation speed dynamically
+function getAnimSpeed() {
+  const val = document.getElementById('speedSlider').value;
+  return parseFloat(val) * 0.001;
+}
+
+function toggleAnim() {
   animRunning = !animRunning;
   const btn = document.getElementById('animBtn');
-  if(animRunning){
-    btn.textContent='● 회전 ON'; btn.classList.add('on'); btn.classList.remove('off');
+  if (animRunning) {
+    btn.textContent = '회전 ON';
+    btn.classList.add('on');
     animate();
   } else {
-    btn.textContent='● 회전 OFF'; btn.classList.add('off'); btn.classList.remove('on');
-    if(animId) cancelAnimationFrame(animId);
-    drawAllLayers(animAngle);
+    btn.textContent = '회전 OFF';
+    btn.classList.remove('on');
+    if (animId) cancelAnimationFrame(animId);
+    redraw();
   }
 }
 
-function animate(){
-  animAngle += 0.008;
-  drawAllLayers(animAngle);
-  if(animRunning) animId = requestAnimationFrame(animate);
+function animate() {
+  animAngle += getAnimSpeed();
+  redraw();
+  if (animRunning) animId = requestAnimationFrame(animate);
 }
 
-function drawAllLayers(rot=0){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+function initCanvases() {
+  // Clear and setup dimensions
+  mCtx = initCanvas('mainCanvas', 330, 330);
+  rCtx = initCanvas('relCanvas', 330, 330);
+}
 
-  // background glow
-  const gr = ctx.createRadialGradient(CX,CY,0,CX,CY,CX);
-  gr.addColorStop(0,'rgba(255,255,255,0.015)');
-  gr.addColorStop(1,'transparent');
-  ctx.fillStyle=gr; ctx.fillRect(0,0,canvas.width,canvas.height);
+function initCanvas(canvasId, logicalW, logicalH) {
+  const canvas = document.getElementById(canvasId);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = logicalW * dpr;
+  canvas.height = logicalH * dpr;
+  canvas.style.width = `${logicalW}px`;
+  canvas.style.height = `${logicalH}px`;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+  return ctx;
+}
 
-  // ── 전역 스케일 계산: 가장 바깥 레이어가 캔버스에 꼭 맞게 ──
+function redraw() {
+  const appContainer = document.getElementById('appContainer');
+  const isRelTab = appContainer.classList.contains('view-relativistic') || appContainer.classList.contains('view-dashboard');
+  
+  drawAllLayers(mainCanvas, mCtx, animAngle, false);
+  if (isRelTab && selectedEl) {
+    drawAllLayers(relCanvas, rCtx, animAngle, true);
+  }
+}
+
+function drawAllLayers(canvas, ctx, rot = 0, isRelativistic = false) {
+  const cx = canvas.width / (2 * (window.devicePixelRatio || 1));
+  const cy = canvas.height / (2 * (window.devicePixelRatio || 1));
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Radial background glow
+  const bgGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, cx);
+  bgGlow.addColorStop(0, 'rgba(255, 255, 255, 0.015)');
+  bgGlow.addColorStop(1, 'transparent');
+  ctx.fillStyle = bgGlow;
+  ctx.fillRect(0, 0, cx * 2, cy * 2);
+  
+  if (currentLayers.length === 0) return;
+  
+  // ── Global dynamic scale calculations so sizes are visually proportioned ──
   let globalScale = 1;
-  if(currentLayers.length > 0){
-    const maxN = Math.max(...currentLayers.map(l=>l.n));
-    const maxT = Math.PI * (3 + maxN * 1.5);
-    const rawExtent = Math.sqrt(maxT) * (maxN * 38 + 20) * (canvas.width / 420);
-    const target = CX * 0.88;
-    if(rawExtent > target) globalScale = target / rawExtent;
+  const maxN = Math.max(...currentLayers.map(l => l.n));
+  const maxT = Math.PI * (2.5 + maxN * 1.2);
+  const rawExtent = Math.sqrt(maxT) * (maxN * 34 + 18);
+  const targetExtent = cx * 0.86;
+  if (rawExtent > targetExtent) {
+    globalScale = targetExtent / rawExtent;
   }
-
-  // draw each layer
-  currentLayers.forEach(layer=>{
-    if(!layerVisible[layer.id]) return;
-    drawFermatOrbital(layer, rot, globalScale);
+  
+  // Render each layer back-to-front (core layers first)
+  currentLayers.forEach(layer => {
+    if (!layerVisible[layer.id]) return;
+    drawFermatOrbital(ctx, cx, cy, layer, rot, globalScale, isRelativistic);
   });
-
-  // center nucleus
-  const ng = ctx.createRadialGradient(CX,CY,0,CX,CY,8);
-  ng.addColorStop(0,'rgba(255,255,255,0.9)');
-  ng.addColorStop(0.4,'rgba(200,220,255,0.5)');
-  ng.addColorStop(1,'transparent');
-  ctx.beginPath(); ctx.arc(CX,CY,8,0,Math.PI*2);
-  ctx.fillStyle=ng; ctx.fill();
+  
+  // Center nucleus particle glow
+  const nucleusGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 8);
+  nucleusGlow.addColorStop(0, '#ffffff');
+  nucleusGlow.addColorStop(0.35, isRelativistic ? 'rgba(0, 229, 255, 0.6)' : 'rgba(245, 169, 74, 0.6)');
+  nucleusGlow.addColorStop(1, 'transparent');
+  
+  ctx.beginPath();
+  ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.fillStyle = nucleusGlow;
+  ctx.fill();
+  
+  // Relativistic watermark text label overlay
+  if (isRelativistic) {
+    ctx.font = '500 9px JetBrains Mono, monospace';
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.45)';
+    ctx.textAlign = 'left';
+    ctx.fillText('RELATIVISTIC CORRECTED', 10, 20);
+  }
 }
 
-function drawFermatOrbital(layer, rot, globalScale=1){
-  const {n, l, electrons, color, maxEl} = layer;
-  const scale = (n * 38 + 20) * (canvas.width/420) * globalScale;
-  const opacity = 0.4 + 0.5*(electrons/maxEl);
-  const STEPS = 1200;
-  const maxT = Math.PI * (3 + n*1.5);
-
+function drawFermatOrbital(ctx, cx, cy, layer, rot, globalScale = 1, isRelativistic = false) {
+  const { n, l, electrons, color, maxEl } = layer;
+  
+  // Relativistic scaling corrections
+  // s orbitals contract due to speed, d & f orbitals expand slightly due to outer screening
+  let relCorr = 1.0;
+  if (isRelativistic) {
+    if (l === 0) relCorr = 0.76;
+    else if (l >= 2) relCorr = 1.16;
+  }
+  
+  const baseScale = (n * 34 + 18) * globalScale * relCorr;
+  const opacity = 0.35 + 0.55 * (electrons / maxEl);
+  const STEPS = 1000;
+  const maxT = Math.PI * (2.5 + n * 1.2);
+  
   ctx.save();
-  ctx.translate(CX, CY);
-  ctx.rotate(rot * (l===0 ? 0.3 : l===1 ? 1 : l===2 ? -0.7 : 0.5));
-
-  // filled region
-  ctx.beginPath();
-  let first=true;
-  for(let i=0;i<=STEPS;i++){
-    const t=(i/STEPS)*maxT;
-    let r;
-    if(l===0) r=Math.sqrt(t)*0.95;
-    else r=Math.sqrt(t)*Math.abs(Math.cos(l*t));
-    const px=r*scale*Math.cos(t), py=r*scale*Math.sin(t);
-    if(first){ctx.moveTo(px,py);first=false;} else ctx.lineTo(px,py);
-  }
-  for(let i=STEPS;i>=0;i--){
-    const t=(i/STEPS)*maxT;
-    let r;
-    if(l===0) r=Math.sqrt(t)*0.55;
-    else r=Math.sqrt(t)*Math.abs(Math.cos(l*t))*0.55;
-    const px=r*scale*Math.cos(t), py=r*scale*Math.sin(t);
-    ctx.lineTo(px,py);
-  }
-  ctx.closePath();
-  const hexToRgba=(hex,a)=>{
-    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  ctx.translate(cx, cy);
+  
+  // Apply rotation speeds relative to angular momentum numbers
+  const speedCoeff = l === 0 ? 0.25 : l === 1 ? 1.0 : l === 2 ? -0.65 : 0.45;
+  ctx.rotate(rot * speedCoeff);
+  
+  const hexToRgba = (hex, a) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r},${g},${b},${a})`;
   };
-  ctx.fillStyle=hexToRgba(color, opacity*0.18);
+  
+  // 1. Draw outer boundary fills (shading density)
+  ctx.beginPath();
+  let first = true;
+  for (let i = 0; i <= STEPS; i++) {
+    const t = (i / STEPS) * maxT;
+    let r = (l === 0) ? Math.sqrt(t) * 0.95 : Math.sqrt(t) * Math.abs(Math.cos(l * t));
+    const px = r * baseScale * Math.cos(t);
+    const py = r * baseScale * Math.sin(t);
+    if (first) { ctx.moveTo(px, py); first = false; }
+    else ctx.lineTo(px, py);
+  }
+  for (let i = STEPS; i >= 0; i--) {
+    const t = (i / STEPS) * maxT;
+    let r = (l === 0) ? Math.sqrt(t) * 0.55 : Math.sqrt(t) * Math.abs(Math.cos(l * t)) * 0.55;
+    const px = r * baseScale * Math.cos(t);
+    const py = r * baseScale * Math.sin(t);
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = hexToRgba(color, opacity * 0.14);
   ctx.fill();
-
-  // main stroke
-  ctx.beginPath(); first=true;
-  for(let i=0;i<=STEPS;i++){
-    const t=(i/STEPS)*maxT;
-    let r;
-    if(l===0) r=Math.sqrt(t);
-    else r=Math.sqrt(t)*Math.abs(Math.cos(l*t));
-    const px=r*scale*Math.cos(t), py=r*scale*Math.sin(t);
-    if(first){ctx.moveTo(px,py);first=false;} else ctx.lineTo(px,py);
+  
+  // 2. Main spiral line stroke
+  ctx.beginPath();
+  first = true;
+  for (let i = 0; i <= STEPS; i++) {
+    const t = (i / STEPS) * maxT;
+    let r = (l === 0) ? Math.sqrt(t) : Math.sqrt(t) * Math.abs(Math.cos(l * t));
+    const px = r * baseScale * Math.cos(t);
+    const py = r * baseScale * Math.sin(t);
+    if (first) { ctx.moveTo(px, py); first = false; }
+    else ctx.lineTo(px, py);
   }
-  ctx.strokeStyle=hexToRgba(color, opacity*0.85);
-  ctx.lineWidth=1.2+(electrons/maxEl)*0.8;
+  
+  // Draw primary sharp stroke
+  ctx.strokeStyle = hexToRgba(color, opacity * 0.85);
+  ctx.lineWidth = 1.1 + (electrons / maxEl) * 0.8;
   ctx.stroke();
-
-  // glow pass
-  ctx.beginPath(); first=true;
-  for(let i=0;i<=STEPS;i++){
-    const t=(i/STEPS)*maxT;
-    let r;
-    if(l===0) r=Math.sqrt(t);
-    else r=Math.sqrt(t)*Math.abs(Math.cos(l*t));
-    const px=r*scale*Math.cos(t), py=r*scale*Math.sin(t);
-    if(first){ctx.moveTo(px,py);first=false;} else ctx.lineTo(px,py);
-  }
-  ctx.strokeStyle=hexToRgba(color, opacity*0.25);
-  ctx.lineWidth=4+(electrons/maxEl)*3;
+  
+  // Draw secondary glow stroke
+  ctx.strokeStyle = hexToRgba(color, opacity * 0.22);
+  ctx.lineWidth = 3.5 + (electrons / maxEl) * 3;
   ctx.stroke();
-
+  
   ctx.restore();
 }
 
 // ═══════════════════════════════════════════
-// SELECT ELEMENT
+// ENERGY DIAGRAM CANVAS
 // ═══════════════════════════════════════════
-let selectedEl = null;
-
-function selectElement(el){
-  // deselect prev
-  if(selectedEl){
-    const prev = document.getElementById(`el-${selectedEl.z}`);
-    if(prev) prev.classList.remove('active');
+function drawEnergyDiag(el, layers) {
+  const cv = document.getElementById('ediagCanvas');
+  
+  // High-DPI setup for energy diagram
+  const dpr = window.devicePixelRatio || 1;
+  const logicalW = cv.parentElement.clientWidth - 40;
+  const logicalH = 160;
+  cv.width = logicalW * dpr;
+  cv.height = logicalH * dpr;
+  cv.style.width = `${logicalW}px`;
+  cv.style.height = `${logicalH}px`;
+  
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+  
+  ctx.clearRect(0, 0, logicalW, logicalH);
+  if (!layers || layers.length === 0) return;
+  
+  const pad = { l: 60, r: 30, t: 25, b: 35 };
+  const iW = logicalW - pad.l - pad.r;
+  const iH = logicalH - pad.t - pad.b;
+  
+  // Calculate relative levels
+  const levels = layers.map(lay => {
+    const baseE = -(el.z * el.z) / (2 * lay.n * lay.n) * 0.22;
+    const relAdj = el.rel * (lay.l === 0 ? -12 : lay.l >= 2 ? +7 : 0);
+    return { ...lay, energy: baseE + relAdj, unshifted: baseE };
+  });
+  
+  const minE = Math.min(...levels.map(l => l.energy)) - 5;
+  const maxE = 5;
+  const eRange = maxE - minE;
+  
+  function eToY(e) {
+    return pad.t + (1 - (e - minE) / eRange) * iH;
   }
-  selectedEl = el;
-  const cell = document.getElementById(`el-${el.z}`);
-  if(cell) cell.classList.add('active');
-
-  // parse layers
-  const layers = parseConfig(el.config);
-  const maxElMap = {s:2,p:6,d:10,f:14,g:18};
-  currentLayers = layers.map((lay,i)=>({
-    ...lay,
-    id: `${lay.n}${lay.type}`,
-    color: OC[lay.type],
-    maxEl: maxElMap[lay.type],
-  }));
-  layerVisible = {};
-  currentLayers.forEach(l=>{ layerVisible[l.id]=true; });
-
-  // draw
-  drawAllLayers(animAngle);
-
-  // update title
-  document.getElementById('canvasTitle').innerHTML =
-    `<strong style="color:${OC[el.block]}">${el.sym}</strong>
-     <span style="font-style:italic;font-size:.9rem;color:var(--dim)"> ${el.name}</span>
-     <span style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--dim);margin-left:8px">Z = ${el.z}</span>`;
-
-  // update right panel
-  buildRightPanel(el, layers);
+  
+  function xForIdx(i) {
+    return pad.l + 30 + (i / Math.max(1, levels.length)) * iW * 0.85;
+  }
+  
+  // Axis ticks grid
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.lineWidth = 0.5;
+  for (let e = Math.ceil(minE / 10) * 10; e <= maxE; e += 10) {
+    const y = eToY(e);
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(logicalW - pad.r, y);
+    ctx.stroke();
+  }
+  
+  // Y Axis Energy Line
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l, pad.t + iH);
+  ctx.stroke();
+  
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.textAlign = 'right';
+  ctx.fillText('E (a.u.)', pad.l - 6, pad.t + 4);
+  
+  // Render energy levels
+  levels.forEach((lay, i) => {
+    const x = xForIdx(i);
+    const y = eToY(lay.energy);
+    const color = OC[lay.type] || '#fff';
+    
+    // Draw relativistic shift guides
+    if (el.rel > 0.1 && Math.abs(lay.energy - lay.unshifted) > 0.1) {
+      const yUnshifted = eToY(lay.unshifted);
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.18)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(x - 22, yUnshifted);
+      ctx.lineTo(x + 22, yUnshifted);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(x, yUnshifted);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    
+    // Setup subshell orbital lines (1, 3, 5, 7 lines based on angular momentum)
+    const l = lay.l;
+    const nOrb = 2 * l + 1;
+    const spacing = 12;
+    const orbitalWidth = 8;
+    const totalW = (nOrb - 1) * spacing + orbitalWidth;
+    const startX = x - totalW / 2;
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    for (let o = 0; o < nOrb; o++) {
+      const ox = startX + o * spacing;
+      ctx.beginPath();
+      ctx.moveTo(ox, y);
+      ctx.lineTo(ox + orbitalWidth, y);
+      ctx.stroke();
+      
+      // Compute Hund's Rule Electron distribution in degenerate states
+      const eCount = lay.electrons;
+      const hasUp = eCount > o;
+      const hasDown = eCount > nOrb + o;
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      
+      // Draw Spin Up vertical arrow
+      if (hasUp) {
+        const arrowX = ox + 2.5;
+        ctx.beginPath();
+        ctx.moveTo(arrowX, y + 4);
+        ctx.lineTo(arrowX, y - 5);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(arrowX - 1.2, y - 3);
+        ctx.lineTo(arrowX, y - 5);
+        ctx.lineTo(arrowX + 1.2, y - 3);
+        ctx.stroke();
+      }
+      
+      // Draw Spin Down vertical arrow
+      if (hasDown) {
+        const arrowX = ox + 5.5;
+        ctx.beginPath();
+        ctx.moveTo(arrowX, y - 4);
+        ctx.lineTo(arrowX, y + 5);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(arrowX - 1.2, y + 3);
+        ctx.lineTo(arrowX, y + 5);
+        ctx.lineTo(arrowX + 1.2, y + 3);
+        ctx.stroke();
+      }
+    }
+    
+    // Subshell text title (e.g. 3d)
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(`${lay.n}${lay.type}`, x, y - 10);
+    
+    // Electron occupancy
+    const isExSubshell = el.ex && (lay.type === 'd' || lay.type === 'f');
+    ctx.fillStyle = isExSubshell ? 'var(--ex)' : 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '500 9px JetBrains Mono, monospace';
+    ctx.fillText(`${lay.electrons}e⁻`, x, y + 15);
+    
+    // Relativistic effect shifts
+    if (el.rel > 0.45 && lay.l === 0) {
+      ctx.fillStyle = 'var(--rel)';
+      ctx.font = '8px sans-serif';
+      ctx.fillText('↓rel', x + totalW / 2 + 10, y + 3);
+    } else if (el.rel > 0.45 && lay.l >= 2) {
+      ctx.fillStyle = 'var(--rel)';
+      ctx.font = '8px sans-serif';
+      ctx.fillText('↑rel', x + totalW / 2 + 10, y + 3);
+    }
+  });
+  
+  // Red warning banner for exception configurations
+  if (el.ex) {
+    ctx.strokeStyle = 'rgba(255, 107, 107, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.strokeRect(pad.l + 4, pad.t + 4, logicalW - pad.l - pad.r - 8, logicalH - pad.t - pad.b - 8);
+    ctx.setLineDash([]);
+    
+    ctx.font = '600 8.5px JetBrains Mono, monospace';
+    ctx.fillStyle = 'var(--ex)';
+    ctx.textAlign = 'left';
+    ctx.fillText('ANOMALOUS CONFIGURATION (예외적 전자 배치)', pad.l + 10, pad.t + 13);
+  }
 }
 
 // ═══════════════════════════════════════════
-// RIGHT PANEL
+// INTERACTIVE SELECTION HANDLER
 // ═══════════════════════════════════════════
-function buildRightPanel(el, layers){
-  const maxElMap={s:2,p:6,d:10,f:14,g:18};
+function selectElement(el) {
+  if (selectedEl) {
+    const prevCell = document.getElementById(`el-cell-${selectedEl.z}`);
+    if (prevCell) prevCell.classList.remove('active');
+  }
+  
+  selectedEl = el;
+  const cell = document.getElementById(`el-cell-${el.z}`);
+  if (cell) cell.classList.add('active');
+  
+  // Parse configurations into orbit layers
+  const parsed = parseConfig(el.config);
+  const maxElMap = { s: 2, p: 6, d: 10, f: 14, g: 18 };
+  
+  currentLayers = parsed.map(lay => ({
+    ...lay,
+    id: `${lay.n}${lay.type}`,
+    color: OC[lay.type] || '#fff',
+    maxEl: maxElMap[lay.type] || 2
+  }));
+  
+  // Reset visibility mappings
+  layerVisible = {};
+  currentLayers.forEach(l => {
+    layerVisible[l.id] = true;
+  });
+  
+  // Dynamic header state title updates
+  document.getElementById('canvasTitle').innerHTML = `
+    <strong style="color:${OC[el.block]}">${el.sym}</strong>
+    <span style="font-style:italic; font-size: 0.95rem; color: var(--text-bright)"> ${el.name}</span>
+    <span>Z = ${el.z} &nbsp;·&nbsp; 원자량 = ${el.mass} u</span>
+  `;
+  
+  // Re-render
+  redraw();
+  drawEnergyDiag(el, currentLayers);
+  buildSidebar(el, parsed);
+}
+
+// ═══════════════════════════════════════════
+// SIDEBAR DETAIL CONSTRUCTORS
+// ═══════════════════════════════════════════
+function buildSidebar(el, layers) {
   const rp = document.getElementById('rightPanel');
-
-  // quantum numbers summary for outermost
-  const outer = layers[layers.length-1];
-  const lNames={0:'s',1:'p',2:'d',3:'f',4:'g'};
-
+  const blockColor = OC[el.block];
+  const outer = layers[layers.length - 1];
+  
+  // Hund's Exchange Energy values
+  const maxCapacity = { s: 2, p: 6, d: 10, f: 14 }[outer.type] || 2;
+  const maxSingleFill = maxCapacity / 2;
+  
+  // Hund's rule: maximum parallel spins
+  const nUp = Math.min(outer.electrons, maxSingleFill);
+  const EexActual = exchangeEnergy(nUp);
+  
+  // If it's an exception, the expected standard Aufbau would have fewer parallel spins
+  // Usually, Aufbau has 1 less electron in d/f subshell and 1 more in s subshell.
+  const EexExpected = el.ex ? exchangeEnergy(nUp - 1) : EexActual;
+  
+  // Relativistic v/c estimates
+  const vOverC = (el.z / 137) / outer.n;
+  const relativisticGamma = 1 / Math.sqrt(1 - vOverC * vOverC);
+  
   rp.innerHTML = `
-    <!-- element card -->
+    <!-- ELEMENT CARD -->
     <div>
-      <div class="section-label">원소 정보</div>
-      <div class="elem-card">
-        <div class="big-sym" style="color:${OC[el.block]}">${el.sym}</div>
-        <div class="elem-name">${el.name}</div>
-        <div class="elem-meta">
-          원자번호 Z = ${el.z}<br>
-          원자량 = ${el.mass} u<br>
-          주기 ${el.period} / ${el.block}-블록
+      <div class="section-label">원소 기본 정보</div>
+      <div class="ecard">
+        <div class="ecard-top">
+          <div class="big-sym" style="color:${blockColor}">${el.sym}</div>
+          <div class="ecard-info">
+            <div class="ename">${el.name}</div>
+            <div class="emeta">Z = ${el.z} &nbsp;·&nbsp; ${el.period}주기 &nbsp;·&nbsp; ${el.block}-블록</div>
+          </div>
         </div>
-        <div class="config">${el.config}</div>
+        <div class="econfig">${el.config}</div>
+        <div class="badge-row">
+          ${el.ex ? '<span class="badge ex">예외 전자 배치</span>' : '<span class="badge stable">Aufbau 원리 충족</span>'}
+          ${el.rel > 0.48 ? '<span class="badge rel">강한 상대론적 효과</span>' : ''}
+        </div>
       </div>
     </div>
 
-    <!-- layer toggles -->
+    <!-- LAYER TOGGLES -->
     <div>
-      <div class="section-label">오비탈 레이어 토글</div>
+      <div class="section-label">오비탈 레이어 개별 제어</div>
       <div class="layers" id="layerList"></div>
     </div>
 
-    <!-- quantum numbers -->
-    <div>
-      <div class="section-label">최외각 전자 양자수</div>
-      <div class="qn-grid">
-        <div class="qn-box">
-          <div class="qn-val" style="color:${OC[outer.type]}">${outer.n}</div>
-          <div class="qn-lbl">n · 주양자수</div>
+    <!-- STANDARD DETAILS / ORBITAL INFO -->
+    <div class="std-only">
+      <div class="section-label">최외각 껍질 양자수</div>
+      <div class="qngrid">
+        <div class="qnbox">
+          <div class="qnval" style="color:${blockColor}">${outer.n}</div>
+          <div class="qnlbl">주양자수 (n)</div>
         </div>
-        <div class="qn-box">
-          <div class="qn-val" style="color:${OC[outer.type]}">${outer.l}</div>
-          <div class="qn-lbl">l · 방위양자수</div>
+        <div class="qnbox">
+          <div class="qnval" style="color:${blockColor}">${outer.l}</div>
+          <div class="qnlbl">방위양자수 (l)</div>
         </div>
-        <div class="qn-box">
-          <div class="qn-val" style="color:${OC[outer.type]}">${outer.electrons}</div>
-          <div class="qn-lbl">e⁻ · 전자 수</div>
+        <div class="qnbox">
+          <div class="qnval" style="color:${blockColor}">${outer.electrons}</div>
+          <div class="qnlbl">전자 수 (e⁻)</div>
         </div>
       </div>
     </div>
 
-    <!-- math -->
-    <div>
-      <div class="section-label">페르마 나선 수식</div>
-      <div class="math-panel">
-        <div class="math-eq">
-          <span>기본형</span><br>
-          r = √θ · |cos(<span class="math-highlight">${outer.l}</span>·θ)|<br><br>
-          <span>레이어 중첩</span><br>
-          ${layers.map(lay=>`Ψ<sub>${lay.n}${lay.type}</sub> : r = √θ·|cos(<b>${lay.l}</b>θ)|, n=${lay.n}`).join('<br>')}
+    <!-- EXCHANGE ENERGY DETAIL PANEL -->
+    <div class="exch-only">
+      <div class="section-label">Hund 교환 에너지 비교 (E_ex)</div>
+      <div class="expanel">
+        <div class="ex-eq">
+          E<sub>ex</sub> = K × C(n<sub>↑</sub>, 2) = K × <span class="hi">${EexActual}</span><br>
+          <span style="color:var(--dim)">n<sub>↑</sub>(동일 스핀 전자) = ${nUp}개</span><br>
+          ${el.ex ? '<span class="hi2">→ 궤도 반충전/완충으로 E_ex 최대화 달성</span>' : ''}
         </div>
-        <div class="phys-desc">
-          ${getPhysDesc(el, layers)}
+        <div class="ex-bars" id="exBars"></div>
+        ${el.ex ? `<div class="ex-note-desc"><strong>배치 원인:</strong> ${el.exNote}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- RELATIVISTIC EFFECT DETAIL PANEL -->
+    <div class="rel-only">
+      <div class="section-label">상대론적 물리 효과 보정</div>
+      <div class="relpanel">
+        <div class="rel-meters">
+          <div class="rel-meter">
+            <div class="rel-val" style="color:var(--rel)">${(vOverC * 100).toFixed(1)}%</div>
+            <div class="rel-lbl">내각 전자의 v/c 속도</div>
+            <div class="rel-bar-wrap">
+              <div class="rel-bar-bg"><div class="rel-bar-fill" style="width:${Math.min(vOverC * 100, 100)}%; background:var(--rel); box-shadow:0 0 4px var(--rel)"></div></div>
+            </div>
+          </div>
+          <div class="rel-meter">
+            <div class="rel-val" style="color:var(--warn)">${relativisticGamma.toFixed(3)}</div>
+            <div class="rel-lbl">상대론적 질량배수 (γ)</div>
+            <div class="rel-bar-wrap">
+              <div class="rel-bar-bg"><div class="rel-bar-fill" style="width:${Math.min((relativisticGamma - 1) * 350, 100)}%; background:var(--warn); box-shadow:0 0 4px var(--warn)"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rel-note-desc">
+          <strong>상대론적 변동 효과:</strong> ${el.relNote ? el.relNote : `원자번호 Z=${el.z}의 중원소 영역입니다. 내각 1s 전자가 빛의 속도의 약 ${(el.z/137*100).toFixed(1)}%에 도달하며 질량이 증가하고, 이로 인해 s 오비탈의 상대론적 수축과 d/f 오비탈의 차폐 스크리닝 간접 팽창이 발생합니다.`}
+        </div>
+      </div>
+    </div>
+
+    <!-- FERMAT MATHEMATICAL FORMULA -->
+    <div>
+      <div class="section-label">페르마 나선 수학 공식</div>
+      <div class="mathpanel">
+        <div class="meq">
+          <b>r = √θ · |cos(<span class="mc">${outer.l}</span>·θ)|</b><br>
+          <span>반경 껍질 스케일 = ${outer.n}</span><br>
+          ${layers.map(l => `<span style="color:${OC[l.type]}">${l.n}${l.type}</span>: l=${l.l}, e=${l.electrons}`).join('<br>')}
+        </div>
+        <div class="pdesc">
+          ${getPhysDesc(el.block)}
         </div>
       </div>
     </div>
   `;
-
-  // build layer toggles
-  const ll = document.getElementById('layerList');
-  currentLayers.forEach(lay=>{
-    const row=document.createElement('div');
-    row.className=`layer-row active`;
-    row.style.setProperty('--lc', OC[lay.type]);
-    row.dataset.lid=lay.id;
-    row.innerHTML=`
-      <div class="layer-toggle"><span class="layer-check">✓</span></div>
-      <div class="layer-info">
-        <div class="layer-name">${lay.n}${lay.type}  <span style="color:var(--dim);font-weight:300">(l=${lay.l})</span></div>
-        <div class="layer-formula">r=√θ·|cos(${lay.l}θ)| · n=${lay.n}</div>
+  
+  // Render Hund's rule bar charts
+  const exBars = document.getElementById('exBars');
+  if (exBars) {
+    const barData = [
+      { label: '실제 배치 (Hund)', val: EexActual, color: 'var(--ex)' },
+      { label: 'Aufbau 예측', val: EexExpected, color: 'rgba(255,255,255,0.2)' }
+    ];
+    const maxVal = Math.max(EexActual, EexExpected, 1);
+    exBars.innerHTML = barData.map(b => `
+      <div class="ex-bar-row">
+        <div class="ex-bar-lbl">${b.label}</div>
+        <div class="ex-bar-bg"><div class="ex-bar-fill" style="width:${(b.val / maxVal) * 100}%; background:${b.color}"></div></div>
+        <div class="ex-bar-val" style="color:${b.color}">${b.val}</div>
       </div>
-      <div class="layer-electrons">${lay.electrons}e⁻</div>
+    `).join('');
+  }
+  
+  // Draw Layer Toggles inside the list
+  const ll = document.getElementById('layerList');
+  currentLayers.forEach(lay => {
+    const row = document.createElement('div');
+    row.className = 'lrow on';
+    row.style.setProperty('--lc', OC[lay.type] || '#fff');
+    row.dataset.lid = lay.id;
+    row.innerHTML = `
+      <div class="ltog"><span class="lcheck">✓</span></div>
+      <div class="linfo">
+        <div class="lname">${lay.n}${lay.type} <span>(l=${lay.l})</span></div>
+        <div class="lform">r = √θ · |cos(${lay.l}θ)|</div>
+      </div>
+      <div class="lelec" style="color:${OC[lay.type]}">${lay.electrons}e⁻</div>
     `;
-    row.addEventListener('click',()=>{
-      layerVisible[lay.id]=!layerVisible[lay.id];
-      row.classList.toggle('active', layerVisible[lay.id]);
-      drawAllLayers(animAngle);
+    
+    row.addEventListener('click', () => {
+      layerVisible[lay.id] = !layerVisible[lay.id];
+      row.classList.toggle('on', layerVisible[lay.id]);
+      redraw();
     });
+    
     ll.appendChild(row);
   });
 }
 
-function getPhysDesc(el, layers){
-  const b=el.block;
-  const descs={
-    s:`s-블록 원소. 최외각 s 오비탈이 구형 대칭(l=0). 페르마 나선이 원형으로 수렴하며 방향성 없는 전자 분포를 표현.`,
-    p:`p-블록 원소. l=1 오비탈이 두 로브의 아령형. |cos θ| 변조로 90°/270° 위치에 각도 노드 발생. 방향성 결합(혼성화)의 기원.`,
-    d:`d-블록 전이 원소. l=2 오비탈이 4엽 구조. |cos 2θ| 변조로 45° 간격 노드 4개. 결정장 이론, 색깔, 자성의 물리적 원천.`,
-    f:`f-블록 란타넘/악티늄족. l=3의 복잡한 다엽 구조. 내부 차폐로 화학 반응성이 낮으나 강한 자기 이방성과 방사능의 원천.`,
+function getPhysDesc(block) {
+  const descs = {
+    s: 's-블록 원소: l=0 구형 대칭 나선 구조를 가집니다. 전자 분포가 무지향성을 띠며, 수식 상 각도 노드가 존재하지 않고 모든 구역에 고르게 분포합니다.',
+    p: 'p-블록 원소: l=1 아령 형태를 가집니다. |cos θ| 각도 변조로 인해 90도와 270도 영역에 오비탈 파동방정식의 각도 노드가 명확히 형성되어 지향성 결합의 물리적 토대가 됩니다.',
+    d: 'd-블록 원소: l=2 네 잎 클로버 형상(4엽)의 오비탈을 이룹니다. 45도 간격의 4개 방향에 오비탈 노드가 발생하며, 전이 원소들의 화려한 배위 구조와 독특한 색채, 강한 영구자성 등의 근원이 됩니다.',
+    f: 'f-block 원소: l=3 다엽 구조의 대칭 복합 형태를 이룹니다. 내각 오비탈 차폐 효과로 외부 화학적 껍질에 의한 결합성 변화는 적지만, 강한 스핀 오비탈 궤도 결합에 따른 큰 자기 모멘트가 특징입니다.'
   };
-  return descs[b]||'';
+  return descs[block] || '';
 }
 
 // ═══════════════════════════════════════════
-// INIT — select H by default
+// TABS NAVIGATION CONTROLLER
 // ═══════════════════════════════════════════
+function switchTab(tabName, event) {
+  // Update tabs
+  document.querySelectorAll('.htab').forEach(btn => btn.classList.remove('active'));
+  if (event) {
+    event.currentTarget.classList.add('active');
+  } else {
+    // Lookup by string
+    const targetTab = Array.from(document.querySelectorAll('.htab')).find(b => b.textContent.includes(tabName));
+    if (targetTab) targetTab.classList.add('active');
+  }
+  
+  // Set layout mode on container
+  const appContainer = document.getElementById('appContainer');
+  appContainer.className = `app view-${tabName}`;
+  
+  // Periodic table highlighter class toggles
+  const ptGrid = document.getElementById('ptGrid');
+  ptGrid.classList.remove('highlight-ex', 'highlight-rel');
+  
+  if (tabName === 'exchange') {
+    ptGrid.classList.add('highlight-ex');
+  } else if (tabName === 'relativistic') {
+    ptGrid.classList.add('highlight-rel');
+  }
+  
+  // Refresh canvas sizes and redrawing loops
+  redraw();
+  if (selectedEl) {
+    drawEnergyDiag(selectedEl, currentLayers);
+  }
+}
+
+// ═══════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════
+window.addEventListener('resize', () => {
+  initCanvases();
+  redraw();
+  if (selectedEl) {
+    drawEnergyDiag(selectedEl, currentLayers);
+  }
+});
+
+// Setup periodic table and visual canvases
+buildPeriodicTable();
+initCanvases();
+
+// Select Hydrogen by default to kickstart rendering
 selectElement(ELEMENTS[0]);
+
 </script>
 </body>
 </html>
