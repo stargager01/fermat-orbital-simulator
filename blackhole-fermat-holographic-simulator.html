@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>블랙홀 우주 가설 시뮬레이터</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050508;--panel:#0d0d14;--card:#13131e;--border:#1e1e2e;
+  --text:#e8e6f0;--muted:#666;--dim:#333;
+  --blue:#7a9cd4;--purple:#AFA9EC;--teal:#5DCAA5;--coral:#F09975;
+  --gold:#F0C080;--red:#F08080;--cyan:#80D8F0;--white:#ffffff;
+  --purple-d:#534AB7;--teal-d:#0F6E56;
+  font-family:-apple-system,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+}
+body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── 헤더 ── */
+#hdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1.2rem;
+  border-bottom:.5px solid var(--border);flex-shrink:0;background:rgba(5,5,8,.9)}
+#hdr h1{font-size:13px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+#hdr .subtitle{font-size:11px;color:#3a3a50;font-family:monospace;text-align:right;line-height:1.5}
+
+/* ── 탭 ── */
+#tabs{display:flex;gap:4px;padding:.45rem 1.2rem .3rem;border-bottom:.5px solid var(--border);flex-shrink:0;background:rgba(5,5,8,.8)}
+.tab{padding:4px 14px;font-size:12px;border:.5px solid var(--border);border-radius:20px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.tab:hover{border-color:var(--purple);color:var(--purple)}
+.tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+/* ── 패널 ── */
+.panel{display:none;flex:1;overflow:hidden;min-height:0}
+.panel.active{display:flex}
+
+/* ══ 사건의 지평선 탭 ══ */
+#horizon{flex-direction:row}
+#horizon-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;
+  padding:.8rem;min-width:0;position:relative}
+#horizonCanvas{border-radius:50%;box-shadow:0 0 60px 8px rgba(170,100,255,.15),0 0 120px 20px rgba(100,50,200,.06)}
+#horizon-overlay{position:absolute;bottom:1.2rem;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--muted);font-family:monospace;letter-spacing:.5px;text-align:center}
+#horizon-side{width:290px;flex-shrink:0;overflow-y:auto;padding:.75rem;
+  border-left:.5px solid var(--border);display:flex;flex-direction:column;gap:.6rem}
+
+/* ══ 엔트로피 탭 ══ */
+#entropy{flex-direction:row;gap:0}
+#entropy-left{flex:1;display:flex;flex-direction:column;padding:.8rem;gap:.7rem;min-width:0}
+#entropyCanvas{border-radius:6px;background:#07070e}
+#entropy-right{width:270px;flex-shrink:0;border-left:.5px solid var(--border);
+  padding:.75rem;overflow-y:auto;display:flex;flex-direction:column;gap:.6rem}
+
+/* ══ 자식 우주 탭 ══ */
+#child{flex-direction:row}
+#child-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;
+  padding:.8rem;min-width:0;position:relative}
+#childCanvas{border-radius:8px}
+#child-side{width:290px;flex-shrink:0;border-left:.5px solid var(--border);
+  padding:.75rem;overflow-y:auto;display:flex;flex-direction:column;gap:.6rem}
+
+/* ══ 은하 탭 ══ */
+#galaxy{flex-direction:column;padding:.9rem;gap:.7rem;overflow-y:auto}
+
+/* ── 공통 사이드바 컴포넌트 ── */
+.sb-card{background:var(--card);border:.5px solid var(--border);border-radius:8px;padding:.65rem .85rem}
+.sb-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:.45rem;font-weight:500}
+.sb-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.sb-row label{font-size:11.5px;color:var(--muted);flex:1;white-space:nowrap}
+.sb-row input[type=range]{flex:2;accent-color:var(--purple);height:2px}
+.sb-row .val{font-size:11px;color:var(--purple);min-width:42px;text-align:right;font-family:monospace}
+.sb-row select{flex:2;background:var(--panel);border:.5px solid var(--border);border-radius:4px;
+  color:var(--text);font-size:11px;padding:3px 5px}
+.btn{width:100%;padding:6px;font-size:12px;border:.5px solid var(--border);
+  border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.5px}
+.btn:hover{border-color:var(--purple);color:var(--purple)}
+.btn.active{border-color:var(--purple);color:var(--purple);background:rgba(175,169,236,.08)}
+.btn-row{display:flex;gap:5px}
+.btn-row .btn{flex:1}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.stat-box{background:var(--panel);border:.5px solid var(--border);border-radius:6px;padding:.4rem .6rem;text-align:center}
+.stat-val{font-size:14px;font-weight:500;font-family:monospace;color:var(--purple)}
+.stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
+.info-text{font-size:11.5px;color:var(--muted);line-height:1.7}
+.formula-line{font-family:monospace;font-size:12px;color:var(--cyan);margin-bottom:3px}
+.badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;display:inline-block}
+.b-purple{background:#1e1a40;color:var(--purple)}
+.b-teal{background:#0a1f18;color:var(--teal)}
+.b-coral{background:#2a1510;color:var(--coral)}
+.b-gold{background:#1e1800;color:var(--gold)}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>Black Hole Universe Simulator</h1>
+  <div class="subtitle">
+    홀로그램 원리 × 페르마 나선 × 우주 자연선택설<br>
+    <span style="color:#2a2a40">S = A / 4l_P²  ·  r = a√θ · |cos(l·θ)|</span>
+  </div>
+</div>
+
+<div id="tabs">
+  <button class="tab active" data-t="horizon">사건의 지평선</button>
+  <button class="tab" data-t="entropy">엔트로피 곡선</button>
+  <button class="tab" data-t="child">자식 우주 생성</button>
+  <button class="tab" data-t="galaxy">은하 회전 비교</button>
+</div>
+
+<!-- ══ 사건의 지평선 ══ -->
+<div class="panel active" id="horizon">
+  <div id="horizon-canvas-wrap">
+    <canvas id="horizonCanvas"></canvas>
+    <div id="horizon-overlay"></div>
+  </div>
+  <div id="horizon-side">
+    <div class="sb-card">
+      <div class="sb-label">블랙홀 파라미터</div>
+      <div class="sb-row"><label>반경 R (M☉)</label>
+        <input type="range" id="bhR" min="1" max="100" step="1" value="10">
+        <span class="val" id="bhRval">10</span></div>
+      <div class="sb-row"><label>질량 M (M☉)</label>
+        <input type="range" id="bhM" min="1" max="200" step="1" value="10">
+        <span class="val" id="bhMval">10</span></div>
+      <div class="sb-row"><label>정보 밀도 l</label>
+        <input type="range" id="bhL" min="0" max="4" step="0.5" value="2">
+        <span class="val" id="bhLval">2.0</span></div>
+      <div class="sb-row"><label>나선 밀도 θ</label>
+        <input type="range" id="bhT" min="20" max="300" step="10" value="120">
+        <span class="val" id="bhTval">120</span></div>
+      <div class="sb-row"><label>인터리브 N</label>
+        <input type="range" id="bhN" min="1" max="6" step="1" value="3">
+        <span class="val" id="bhNval">3</span></div>
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-label">홀로그램 통계</div>
+      <div class="stat-grid" id="horizonStats"></div>
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-label">시각화 모드</div>
+      <div class="sb-row"><label>색상 모드</label>
+        <select id="colorMode">
+          <option value="entropy">엔트로피 열지도</option>
+          <option value="phase">위상 (+/−)</option>
+          <option value="radial">반지름 밀도</option>
+          <option value="time">시간 진행</option>
+        </select></div>
+    </div>
+
+    <div class="sb-card">
+      <div class="btn-row">
+        <button class="btn" id="btnHAnim">▶ 정보 유입</button>
+        <button class="btn" id="btnHRot">⟳ 회전</button>
+      </div>
+      <div class="btn-row" style="margin-top:5px">
+        <button class="btn" id="btnHPNG">↓ PNG</button>
+        <button class="btn" id="btnPlank">플랑크 정규화</button>
+      </div>
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-label">수식</div>
+      <div class="formula-line">S = A / (4 l_P²)</div>
+      <div class="formula-line">A = 4π R²</div>
+      <div class="formula-line">r = √θ · |cos(l·θ)|</div>
+      <div class="formula-line">I = S / ln2 [bits]</div>
+      <div class="info-text" style="margin-top:.4rem">
+        각 나선 점 = 플랑크 넓이(l_P²) 1비트<br>
+        l 파라미터 = 정보 분포 대칭성<br>
+        노드 방향 = 정보 전이 경계
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 엔트로피 곡선 ══ -->
+<div class="panel" id="entropy">
+  <div id="entropy-left">
+    <canvas id="entropyCanvas"></canvas>
+    <canvas id="densityCanvas" style="border-radius:6px;background:#07070e"></canvas>
+  </div>
+  <div id="entropy-right">
+    <div class="sb-card">
+      <div class="sb-label">곡선 파라미터</div>
+      <div class="sb-row"><label>R 범위 (M☉)</label>
+        <input type="range" id="eRmax" min="10" max="500" step="10" value="100">
+        <span class="val" id="eRmaxVal">100</span></div>
+      <div class="sb-row"><label>l (정보 분포)</label>
+        <input type="range" id="eL" min="0" max="4" step="0.5" value="2">
+        <span class="val" id="eLVal">2.0</span></div>
+      <div class="sb-row"><label>플랑크 길이 배율</label>
+        <input type="range" id="ePlank" min="1" max="10" step="0.5" value="1">
+        <span class="val" id="ePlankVal">1.0</span></div>
+    </div>
+    <div class="sb-card">
+      <div class="sb-label">곡선 오버레이</div>
+      <div class="sb-row">
+        <label><input type="checkbox" id="showBH" checked style="margin-right:5px">베켄슈타인-호킹</label></div>
+      <div class="sb-row">
+        <label><input type="checkbox" id="showFermat" checked style="margin-right:5px">페르마 나선 밀도</label></div>
+      <div class="sb-row">
+        <label><input type="checkbox" id="showThermo" style="margin-right:5px">열역학 한계</label></div>
+    </div>
+    <div class="sb-card">
+      <div class="sb-label">현재 값 (R = <span id="eRcur">10</span> M☉)</div>
+      <div class="stat-grid" id="entropyStats"></div>
+    </div>
+    <div class="sb-card">
+      <div class="sb-label">해석</div>
+      <div class="info-text">
+        <span style="color:var(--teal)">■</span> S ∝ R² (면적 법칙)<br>
+        반지름이 2배 → 엔트로피 4배<br>
+        정보는 부피가 아닌 경계에 저장됨<br><br>
+        <span style="color:var(--purple)">■</span> 페르마 밀도 ∝ 1/√θ<br>
+        중심 → 고밀도 / 외곽 → 저밀도<br>
+        홀로그램 정보 분포와 유사
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 자식 우주 ══ -->
+<div class="panel" id="child">
+  <div id="child-canvas-wrap">
+    <canvas id="childCanvas"></canvas>
+  </div>
+  <div id="child-side">
+    <div class="sb-card">
+      <div class="sb-label">물리 상수 변이 (Δ)</div>
+      <div class="sb-row"><label>미세구조상수 α</label>
+        <input type="range" id="dAlpha" min="-30" max="30" step="1" value="0">
+        <span class="val" id="dAlphaVal">0%</span></div>
+      <div class="sb-row"><label>양성자 질량 m_p</label>
+        <input type="range" id="dMp" min="-30" max="30" step="1" value="0">
+        <span class="val" id="dMpVal">0%</span></div>
+      <div class="sb-row"><label>우주 상수 Λ</label>
+        <input type="range" id="dLambda" min="-50" max="50" step="1" value="0">
+        <span class="val" id="dLambdaVal">0%</span></div>
+      <div class="sb-row"><label>중력 상수 G</label>
+        <input type="range" id="dG" min="-20" max="20" step="1" value="0">
+        <span class="val" id="dGVal">0%</span></div>
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-label">생성 파라미터</div>
+      <div class="sb-row"><label>변이 확률</label>
+        <input type="range" id="mutRate" min="0" max="100" step="5" value="20">
+        <span class="val" id="mutRateVal">20%</span></div>
+      <div class="sb-row"><label>팽창 속도</label>
+        <input type="range" id="expandRate" min="1" max="10" step="0.5" value="3">
+        <span class="val" id="expandRateVal">3.0</span></div>
+      <div class="sb-row"><label>세대 수</label>
+        <input type="range" id="genCount" min="1" max="5" step="1" value="3">
+        <span class="val" id="genCountVal">3</span></div>
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-label">우주 적합도</div>
+      <div id="fitnessDisplay" class="info-text"></div>
+    </div>
+
+    <div class="sb-card">
+      <div class="btn-row">
+        <button class="btn" id="btnChildRun">▶ 빅뱅 시뮬레이션</button>
+      </div>
+      <div class="btn-row" style="margin-top:5px">
+        <button class="btn" id="btnChildRand">⟳ 무작위 변이</button>
+        <button class="btn" id="btnChildReset">초기화</button>
+      </div>
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-label">스몰린 자연선택설</div>
+      <div class="info-text">
+        자식 우주는 부모 블랙홀의 정보를<br>
+        초기 조건으로 물려받습니다.<br><br>
+        α ↑ → 전자기력 강화 → 별 수명↓<br>
+        m_p ↑ → 핵 합성 어려움 → BH↓<br>
+        Λ ↑ → 가속 팽창 → 구조 형성↓<br>
+        G ↑ → 중력 강화 → BH 생성↑
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 은하 회전 ══ -->
+<div class="panel" id="galaxy">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;flex:1;min-height:0">
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      <canvas id="galaxyCanvas" style="border-radius:8px;background:#07070e;flex:1"></canvas>
+      <div class="sb-card">
+        <div class="sb-label">은하 파라미터</div>
+        <div class="sb-row"><label>은하 질량 (×10¹¹ M☉)</label>
+          <input type="range" id="galMass" min="1" max="20" step="0.5" value="5">
+          <span class="val" id="galMassVal">5.0</span></div>
+        <div class="sb-row"><label>암흑물질 비율</label>
+          <input type="range" id="dmRatio" min="0" max="95" step="5" value="85">
+          <span class="val" id="dmRatioVal">85%</span></div>
+        <div class="sb-row"><label>중심 BH 질량 (×10⁶ M☉)</label>
+          <input type="range" id="bhMass" min="1" max="100" step="1" value="10">
+          <span class="val" id="bhMassVal">10</span></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      <canvas id="rotCurveCanvas" style="border-radius:8px;background:#07070e;flex:1"></canvas>
+      <div class="sb-card">
+        <div class="sb-label">페르마 나선 연결</div>
+        <div class="info-text">
+          은하 회전 곡선의 편평한 부분은<br>
+          페르마 나선의 <span style="color:var(--purple)">등면적 성질</span>과 대응합니다.<br><br>
+          r = √θ : 각도 증가 → 반지름 √ 증가<br>
+          v = const : 선속도 일정 → 다크매터 분포<br><br>
+          <span style="color:var(--teal)">NFW 프로파일</span> vs<br>
+          <span style="color:var(--purple)">페르마 등면적 모델</span> 비교
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  물리 상수
+// ════════════════════════════════════════
+const PHYS={
+  lP:1.616e-35,   // 플랑크 길이 [m]
+  G:6.674e-11,    // 중력 상수
+  c:3e8,          // 광속
+  hbar:1.055e-34, // 환산 플랑크
+  kB:1.38e-23,    // 볼츠만
+  Msun:1.989e30,  // 태양 질량 [kg]
+  Rs_per_Msun:2953 // 슈바르츠실트 반지름/태양질량 [m/M☉]
+};
+
+// ════════════════════════════════════════
+//  유틸
+// ════════════════════════════════════════
+const $=id=>document.getElementById(id);
+function bindSlider(id,outId,digits,cb){
+  $(id).addEventListener("input",e=>{
+    const v=parseFloat(e.target.value);
+    $(outId).textContent=digits==="%"?v+"%":v.toFixed(digits);
+    cb&&cb(v);
+  });
+}
+function fmtSci(n){
+  if(n===0)return"0";
+  const e=Math.floor(Math.log10(Math.abs(n)));
+  const m=(n/Math.pow(10,e)).toFixed(2);
+  return`${m}×10^${e}`;
+}
+
+// ════════════════════════════════════════
+//  탭 전환
+// ════════════════════════════════════════
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    $(t.dataset.t).classList.add("active");
+    setTimeout(()=>{
+      if(t.dataset.t==="horizon")initHorizon();
+      if(t.dataset.t==="entropy")initEntropy();
+      if(t.dataset.t==="child")initChild();
+      if(t.dataset.t==="galaxy")initGalaxy();
+    },30);
+  });
+});
+
+// ════════════════════════════════════════
+//  페르마 나선 코어
+// ════════════════════════════════════════
+function fermatPoints(l,tmax,steps,scale,cx,cy,phase,colorFn){
+  const pts=[];
+  for(let i=0;i<=steps;i++){
+    const th=i/steps*tmax+phase;
+    const cosVal=l===0?1:Math.cos(l*th);
+    const mod=Math.abs(cosVal);
+    const r=Math.sqrt(th)*mod*scale/Math.sqrt(tmax);
+    const x=cx+r*Math.cos(th);
+    const y=cy-r*Math.sin(th);
+    pts.push({x,y,th,r:r/scale,cosVal,sign:cosVal>=0?1:-1});
+  }
+  return pts;
+}
+
+function drawFermat(ctx,l,tmax,N,scale,cx,cy,sw,rot,colorFn){
+  ctx.lineCap="round";
+  const steps=Math.round(tmax*70);
+  for(let k=0;k<N;k++){
+    const phase=2*Math.PI*k/N+rot;
+    const pts=fermatPoints(l,tmax,steps,scale,cx,cy,phase,colorFn);
+    let seg=[],prevSign=null;
+    const flush=(sign)=>{
+      if(seg.length<2)return;
+      ctx.beginPath();
+      ctx.moveTo(seg[0].x,seg[0].y);
+      for(let i=1;i<seg.length;i++)ctx.lineTo(seg[i].x,seg[i].y);
+      ctx.strokeStyle=colorFn(seg[0],sign,k,N);
+      ctx.lineWidth=sw;ctx.stroke();
+      seg=[];
+    };
+    for(const pt of pts){
+      if(prevSign!==null&&pt.sign!==prevSign){flush(prevSign);seg=[pt];}
+      else seg.push(pt);
+      prevSign=pt.sign;
+    }
+    flush(prevSign);
+  }
+}
+
+// ════════════════════════════════════════
+//  1. 사건의 지평선
+// ════════════════════════════════════════
+const HC=$("horizonCanvas");
+const HCTX=HC.getContext("2d");
+let hAnimId=null,hRotId=null,hRot=0,hInfoT=0;
+let hAnimating=false,hRotating=false,hPlank=false;
+
+function hCalc(){
+  const R=+$("bhR").value,M=+$("bhM").value;
+  const R_m=R*PHYS.Rs_per_Msun;
+  const A=4*Math.PI*R_m**2;
+  const lP2=PHYS.lP**2*(hPlank?1:1e60);
+  const S=A/(4*lP2);
+  const I=S/Math.log(2);
+  return{R,M,R_m,A,S,I};
+}
+
+function hColorFn(pt,sign,k,N){
+  const mode=$("colorMode").value;
+  if(mode==="entropy"){
+    const h=pt.r*280;
+    return`hsl(${h},70%,${sign>0?55:35}%)`;
+  } else if(mode==="phase"){
+    return sign>0?"rgba(175,169,236,.85)":"rgba(240,153,117,.6)";
+  } else if(mode==="radial"){
+    const b=sign>0?Math.round(30+pt.r*70):Math.round(15+pt.r*35);
+    return`hsl(${200+k*40},60%,${b}%)`;
+  } else {
+    const h=(pt.th/+$("bhT").value)*360+k*60;
+    return`hsl(${h%360},65%,${sign>0?55:38}%)`;
+  }
+}
+
+function drawHorizon(rot){
+  const w=HC.width,h=HC.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2;
+  HCTX.clearRect(0,0,w,h);
+
+  // 배경 방사형 글로우
+  const bg=HCTX.createRadialGradient(cx,cy,0,cx,cy,r);
+  bg.addColorStop(0,"rgba(80,40,140,.12)");
+  bg.addColorStop(0.6,"rgba(20,10,40,.06)");
+  bg.addColorStop(1,"rgba(0,0,0,0)");
+  HCTX.fillStyle=bg;HCTX.fillRect(0,0,w,h);
+
+  const l=+$("bhL").value,tmax=+$("bhT").value,N=+$("bhN").value;
+  const scale=r*0.88;
+
+  // 정보 흡수 애니메이션 (안쪽으로 수렴)
+  if(hAnimating){
+    const infoR=r*0.3+r*0.5*Math.abs(Math.sin(hInfoT*0.5));
+    for(let i=0;i<12;i++){
+      const a=i/12*Math.PI*2+hInfoT*0.3;
+      const x1=cx+infoR*Math.cos(a),y1=cy-infoR*Math.sin(a);
+      const x2=cx+r*0.05*Math.cos(a+hInfoT),y2=cy-r*0.05*Math.sin(a+hInfoT);
+      const grad=HCTX.createLinearGradient(x1,y1,x2,y2);
+      grad.addColorStop(0,"rgba(175,169,236,0)");
+      grad.addColorStop(1,"rgba(175,169,236,.5)");
+      HCTX.beginPath();HCTX.moveTo(x1,y1);HCTX.lineTo(x2,y2);
+      HCTX.strokeStyle=grad;HCTX.lineWidth=0.8;HCTX.stroke();
+    }
+    hInfoT+=0.04;
+  }
+
+  // 클리핑 원
+  HCTX.save();
+  HCTX.beginPath();HCTX.arc(cx,cy,r*0.97,0,Math.PI*2);HCTX.clip();
+
+  drawFermat(HCTX,l,tmax,N,scale,cx,cy,0.9,rot,hColorFn);
+
+  HCTX.restore();
+
+  // 사건의 지평선 테두리
+  HCTX.beginPath();HCTX.arc(cx,cy,r*0.97,0,Math.PI*2);
+  HCTX.strokeStyle="rgba(175,169,236,.3)";HCTX.lineWidth=1.5;HCTX.stroke();
+  HCTX.beginPath();HCTX.arc(cx,cy,r*0.99,0,Math.PI*2);
+  HCTX.strokeStyle="rgba(100,60,180,.15)";HCTX.lineWidth=3;HCTX.stroke();
+
+  // 중심 특이점
+  const sg=HCTX.createRadialGradient(cx,cy,0,cx,cy,r*0.04);
+  sg.addColorStop(0,"rgba(255,255,255,.9)");
+  sg.addColorStop(0.5,"rgba(200,150,255,.5)");
+  sg.addColorStop(1,"rgba(100,50,200,0)");
+  HCTX.fillStyle=sg;HCTX.beginPath();HCTX.arc(cx,cy,r*0.04,0,Math.PI*2);HCTX.fill();
+
+  // 오버레이 통계
+  const d=hCalc();
+  $("horizon-overlay").innerHTML=
+    `R = ${d.R} M☉ &nbsp;|&nbsp; A = ${fmtSci(d.A)} m² &nbsp;|&nbsp; S ∝ ${fmtSci(d.A/(4*PHYS.lP**2*1e60))} (정규화)`;
+  updateHorizonStats(d);
+}
+
+function updateHorizonStats(d){
+  const items=[
+    {v:`${d.R} M☉`,l:"반경 R"},
+    {v:`${d.M} M☉`,l:"질량 M"},
+    {v:fmtSci(d.A),l:"지평선 면적"},
+    {v:fmtSci(d.A/(4*PHYS.lP**2)),l:"엔트로피 S"},
+  ];
+  $("horizonStats").innerHTML=items.map(i=>
+    `<div class="stat-box"><div class="stat-val">${i.v}</div><div class="stat-lbl">${i.l}</div></div>`
+  ).join("");
+}
+
+function initHorizon(){
+  const wrap=$("horizon-canvas-wrap");
+  const sz=Math.min(wrap.clientWidth-20,wrap.clientHeight-20,480);
+  HC.width=HC.height=sz;
+  drawHorizon(hRot);
+}
+
+["bhR","bhM","bhL","bhT","bhN"].forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    $(`${id}val`).textContent=parseFloat($(id).value).toFixed(id==="bhL"?1:0);
+    if(!hAnimating&&!hRotating)drawHorizon(hRot);
+  });
+});
+$("colorMode").addEventListener("change",()=>{if(!hAnimating&&!hRotating)drawHorizon(hRot);});
+
+$("btnHAnim").onclick=()=>{
+  hAnimating=!hAnimating;
+  $("btnHAnim").classList.toggle("active",hAnimating);
+  $("btnHAnim").textContent=hAnimating?"■ 정지":"▶ 정보 유입";
+  if(hAnimating){
+    (function loop(){if(!hAnimating)return;drawHorizon(hRot);hAnimId=requestAnimationFrame(loop);})();
+  } else cancelAnimationFrame(hAnimId);
+};
+$("btnHRot").onclick=()=>{
+  hRotating=!hRotating;
+  $("btnHRot").classList.toggle("active",hRotating);
+  if(hRotating){
+    (function loop(){if(!hRotating)return;hRot+=0.012;drawHorizon(hRot);requestAnimationFrame(loop);})();
+  }
+};
+$("btnHPNG").onclick=()=>{
+  const a=document.createElement("a");a.href=HC.toDataURL();
+  a.download="blackhole_horizon.png";a.click();
+};
+$("btnPlank").onclick=()=>{
+  hPlank=!hPlank;
+  $("btnPlank").classList.toggle("active",hPlank);
+  drawHorizon(hRot);
+};
+
+// ════════════════════════════════════════
+//  2. 엔트로피 곡선
+// ════════════════════════════════════════
+function initEntropy(){
+  const el=$("entropy-left");
+  const w=el.clientWidth-16,h1=Math.round((el.clientHeight-60)/2);
+  const EC=$("entropyCanvas"),DC=$("densityCanvas");
+  EC.width=w;EC.height=h1;
+  DC.width=w;DC.height=h1;
+  drawEntropyCurves();
+}
+
+function drawEntropyCurves(){
+  const EC=$("entropyCanvas"),DC=$("densityCanvas");
+  const w=EC.width,h=EC.height;
+  const Rmax=+$("eRmax").value,l=+$("eL").value,plk=+$("ePlank").value;
+  const showBH=$("showBH").checked,showFermat=$("showFermat").checked,showThermo=$("showThermo").checked;
+  const N=300;
+
+  function drawGrid(ctx,title,clr){
+    ctx.fillStyle="#07070e";ctx.fillRect(0,0,w,h);
+    ctx.fillStyle="#1a1a28";
+    [0.25,0.5,0.75,1].forEach(f=>{
+      ctx.fillRect(0,h*(1-f),w,1);
+      ctx.fillStyle="#2a2a3a";ctx.fillRect(w*f,0,1,h);ctx.fillStyle="#1a1a28";
+    });
+    ctx.fillStyle="#444";ctx.font="10px monospace";ctx.textAlign="left";
+    ctx.fillText(title,8,16);
+    ctx.fillStyle="#333";ctx.textAlign="right";
+    ctx.fillText(`R(0~${Rmax} M☉)`,w-8,h-6);
+  }
+
+  // 엔트로피 그래프
+  const ECTX=EC.getContext("2d");
+  drawGrid(ECTX,"S (엔트로피) vs R","");
+
+  // 베켄슈타인-호킹: S = 4πR²/4l_P² ∝ R²
+  let maxS=0;
+  const Svals=[];
+  for(let i=0;i<=N;i++){
+    const R=i/N*Rmax;
+    const R_m=R*PHYS.Rs_per_Msun;
+    const S=4*Math.PI*R_m**2/(4*PHYS.lP**2*plk*1e60);
+    Svals.push(S);if(S>maxS)maxS=S;
+  }
+
+  function plotLine(ctx,vals,max,color,lw,dash){
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=lw;
+    if(dash)ctx.setLineDash(dash);else ctx.setLineDash([]);
+    for(let i=0;i<=N;i++){
+      const x=i/N*w,y=h-(vals[i]/max)*h*0.88;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();ctx.setLineDash([]);
+  }
+
+  if(showBH)plotLine(ECTX,Svals,maxS,"rgba(95,202,165,.85)",1.8);
+
+  // 페르마 밀도 (나선 반지름 = 엔트로피와 비교)
+  if(showFermat){
+    const Fvals=[];let maxF=0;
+    for(let i=0;i<=N;i++){
+      const R=i/N*Rmax;const th=R/Rmax*+$("bhT").value;
+      const mod=l===0?1:Math.abs(Math.cos(l*th));
+      const fv=Math.sqrt(th+0.01)*mod;
+      Fvals.push(fv);if(fv>maxF)maxF=fv;
+    }
+    plotLine(ECTX,Fvals,maxF,"rgba(175,169,236,.75)",1.5,[4,3]);
+  }
+
+  if(showThermo){
+    const Tvals=Svals.map((s,i)=>{const R=i/N*Rmax;return R<1?0:s*0.7;});
+    plotLine(ECTX,Tvals,maxS,"rgba(240,153,117,.6)",1.2,[2,4]);
+  }
+
+  // 범례
+  const leg=[
+    showBH&&{c:"rgba(95,202,165,.85)",l:"S = A/4l_P² (BH)"},
+    showFermat&&{c:"rgba(175,169,236,.75)",l:"페르마 나선 밀도"},
+    showThermo&&{c:"rgba(240,153,117,.6)",l:"열역학 한계"},
+  ].filter(Boolean);
+  leg.forEach((item,i)=>{
+    ECTX.fillStyle=item.c;ECTX.fillRect(8,h-22-i*14,18,2);
+    ECTX.fillStyle="#888";ECTX.font="10px monospace";ECTX.textAlign="left";
+    ECTX.fillText(item.l,30,h-18-i*14);
+  });
+
+  // 정보 밀도 그래프 (θ에 따른 변화)
+  const DCTX=DC.getContext("2d");
+  drawGrid(DCTX,"dI/dθ (정보 밀도율) vs θ","");
+  const TMAX=+$("bhT").value;
+  const Dvals=[];let maxD=0;
+  for(let i=0;i<=N;i++){
+    const th=i/N*TMAX;
+    const mod=l===0?1:Math.abs(Math.cos(l*th));
+    const density=th<0.01?0:mod/(2*Math.sqrt(th));
+    Dvals.push(density);if(density>maxD)maxD=density;
+  }
+  plotLine(DCTX,Dvals,maxD,"rgba(240,192,128,.85)",1.5);
+
+  // θ별 오비탈 노드 표시
+  if(l>0){
+    for(let i=0;i<Math.floor(TMAX/(Math.PI/l)*0.5);i++){
+      const th=(i+0.5)*Math.PI/l;
+      const x=th/TMAX*w;
+      DCTX.fillStyle="rgba(175,169,236,.3)";
+      DCTX.fillRect(x,0,1,DC.height);
+    }
+  }
+  DCTX.fillStyle="#555";DCTX.font="10px monospace";DCTX.textAlign="left";
+  DCTX.fillText("dI/dθ ∝ |cos(lθ)|/(2√θ)  — 노드: 정보 경계",8,16);
+
+  // 현재 R값 통계
+  const Rcur=+$("bhR").value;
+  const Rcur_m=Rcur*PHYS.Rs_per_Msun;
+  const Scur=4*Math.PI*Rcur_m**2/(4*PHYS.lP**2);
+  $("eRcur").textContent=Rcur;
+  $("entropyStats").innerHTML=[
+    {v:fmtSci(Scur),l:"엔트로피 S"},
+    {v:fmtSci(Scur/Math.log(2)),l:"정보량 [bits]"},
+    {v:fmtSci(4*Math.PI*Rcur_m**2),l:"면적 A [m²]"},
+    {v:fmtSci(PHYS.hbar*PHYS.c**3/(8*Math.PI*PHYS.G*(Rcur*PHYS.Msun)*PHYS.kB)),l:"호킹 온도 T [K]"},
+  ].map(i=>`<div class="stat-box"><div class="stat-val" style="font-size:11px">${i.v}</div><div class="stat-lbl">${i.l}</div></div>`).join("");
+}
+
+["eRmax","eL","ePlank"].forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    $(`${id}Val`).textContent=parseFloat($(id).value).toFixed(id==="eRmax"?0:1);
+    drawEntropyCurves();
+  });
+});
+["showBH","showFermat","showThermo"].forEach(id=>$(id).addEventListener("change",drawEntropyCurves));
+
+// ════════════════════════════════════════
+//  3. 자식 우주
+// ════════════════════════════════════════
+const CC=$("childCanvas");
+const CCTX=CC.getContext("2d");
+let childAnim=null,childPhase=0,universes=[];
+
+const BASE_CONST={alpha:1/137,mp:938.3,Lambda:1.1e-52,G:6.674e-11};
+
+function mutate(base,deltaSliders){
+  const r=()=>(Math.random()-0.5)*2*+$("mutRate").value/100;
+  return{
+    alpha:base.alpha*(1+deltaSliders.alpha/100+r()),
+    mp:base.mp*(1+deltaSliders.mp/100+r()),
+    Lambda:base.Lambda*(1+deltaSliders.Lambda/100+r()),
+    G:base.G*(1+deltaSliders.G/100+r())
+  };
+}
+
+function fitness(c){
+  // 스몰린 적합도: 블랙홀 생성에 유리한 조건
+  // α: 너무 크면 원자 불안정, 너무 작으면 화학 없음 (최적: 1/137)
+  const alpha_fit=Math.exp(-50*(c.alpha-1/137)**2/(1/137)**2);
+  // G: 클수록 BH 생성 유리하지만 너무 크면 별 수명 짧음
+  const G_fit=Math.exp(-3*(Math.log(c.G/BASE_CONST.G))**2);
+  // Lambda: 작을수록 구조 형성 유리
+  const L_fit=Math.exp(-5*Math.max(0,(c.Lambda-BASE_CONST.Lambda)/BASE_CONST.Lambda));
+  return Math.round((alpha_fit*G_fit*L_fit)*100);
+}
+
+function initChild(){
+  const wrap=$("child-canvas-wrap");
+  const sz=Math.min(wrap.clientWidth-20,wrap.clientHeight-20,480);
+  CC.width=CC.height=sz;
+  universes=[{x:sz/2,y:sz/2,r:0,gen:0,
+    consts:Object.assign({},BASE_CONST),
+    fit:100,color:"rgba(175,169,236,",phase:0}];
+  drawChild();
+  updateFitness();
+}
+
+function drawChild(){
+  const w=CC.width,h=CC.height;
+  CCTX.clearRect(0,0,w,h);
+  CCTX.fillStyle="#050508";CCTX.fillRect(0,0,w,h);
+
+  universes.forEach(u=>{
+    if(u.r<=0)return;
+    // 우주 팽창 원
+    const grad=CCTX.createRadialGradient(u.x,u.y,0,u.x,u.y,u.r);
+    const alpha=Math.min(0.3,u.r/w*0.8);
+    grad.addColorStop(0,u.color+"0.15)");
+    grad.addColorStop(0.7,u.color+alpha+")");
+    grad.addColorStop(1,u.color+"0)");
+    CCTX.fillStyle=grad;
+    CCTX.beginPath();CCTX.arc(u.x,u.y,u.r,0,Math.PI*2);CCTX.fill();
+
+    // 페르마 나선 (자식 우주 내부)
+    if(u.r>20){
+      const l=Math.min(4,u.gen+1);
+      const scale=u.r*0.85;
+      const tmax=Math.PI*(2+u.gen*1.5);
+      CCTX.save();CCTX.beginPath();CCTX.arc(u.x,u.y,u.r*0.95,0,Math.PI*2);CCTX.clip();
+      drawFermat(CCTX,l,tmax,u.gen+1,scale,u.x,u.y,0.7,childPhase*(0.5+u.gen*0.2),
+        (pt,sign)=>`${u.color}${sign>0?0.6:0.35})`);
+      CCTX.restore();
+    }
+
+    // 테두리
+    CCTX.beginPath();CCTX.arc(u.x,u.y,u.r,0,Math.PI*2);
+    CCTX.strokeStyle=u.color+"0.5)";CCTX.lineWidth=1;CCTX.stroke();
+
+    // 세대 레이블
+    if(u.r>30){
+      CCTX.fillStyle="rgba(200,190,240,.6)";CCTX.font=`${Math.min(11,u.r*0.08)}px monospace`;
+      CCTX.textAlign="center";
+      CCTX.fillText(`Gen${u.gen} · ${u.fit}%`,u.x,u.y+u.r*0.7);
+    }
+
+    // 화이트홀 입구 (부모→자식 연결)
+    if(u.parentX!==undefined){
+      CCTX.beginPath();CCTX.moveTo(u.parentX,u.parentY);CCTX.lineTo(u.x,u.y);
+      const lg=CCTX.createLinearGradient(u.parentX,u.parentY,u.x,u.y);
+      lg.addColorStop(0,"rgba(175,169,236,.4)");lg.addColorStop(1,u.color+"0.4)");
+      CCTX.strokeStyle=lg;CCTX.lineWidth=0.8;CCTX.setLineDash([3,4]);CCTX.stroke();
+      CCTX.setLineDash([]);
+    }
+  });
+
+  // 중심 원형 표시
+  CCTX.beginPath();CCTX.arc(w/2,h/2,6,0,Math.PI*2);
+  CCTX.fillStyle="rgba(255,255,255,.4)";CCTX.fill();
+}
+
+function runChildSim(){
+  if(childAnim)cancelAnimationFrame(childAnim);
+  const w=CC.width,h=CC.height;
+  const deltas={
+    alpha:+$("dAlpha").value,mp:+$("dMp").value,
+    Lambda:+$("dLambda").value,G:+$("dG").value
+  };
+  const nGen=+$("genCount").value;
+  const speed=+$("expandRate").value;
+  const colors=["rgba(175,169,236,","rgba(95,202,165,","rgba(240,192,128,","rgba(240,153,117,","rgba(128,216,240,"];
+
+  universes=[{x:w/2,y:h/2,r:0,maxR:w*0.35,gen:0,
+    consts:Object.assign({},BASE_CONST),fit:100,color:colors[0],phase:0,growing:true}];
+
+  // 자식 우주 미리 생성
+  function addChildren(parent,depth){
+    if(depth>=nGen)return;
+    const nChild=Math.floor(Math.random()*2)+2;
+    for(let i=0;i<nChild;i++){
+      const angle=i/nChild*Math.PI*2+Math.random()*0.5;
+      const dist=parent.maxR*(1.1+Math.random()*0.4);
+      const childConsts=mutate(parent.consts,deltas);
+      const fit=fitness(childConsts);
+      const cr=colors[(depth+1)%colors.length];
+      const u={
+        x:parent.x+Math.cos(angle)*dist,
+        y:parent.y-Math.sin(angle)*dist,
+        r:0,maxR:parent.maxR*(0.4+Math.random()*0.25),
+        gen:depth+1,consts:childConsts,fit,color:cr,
+        parentX:parent.x,parentY:parent.y,
+        startTime:0.4+depth*0.35+i*0.1,growing:false
+      };
+      universes.push(u);
+      addChildren(u,depth+1);
+    }
+  }
+  addChildren(universes[0],0);
+  updateFitness();
+
+  let t=0;
+  (function loop(){
+    t+=0.012*speed;childPhase=t;
+    universes.forEach(u=>{
+      if(u.startTime===undefined||t>=u.startTime){
+        u.growing=true;
+        if(u.r<u.maxR)u.r=Math.min(u.maxR,u.r+speed*(u.maxR*0.015));
+      }
+    });
+    drawChild();
+    if(universes.some(u=>u.r<u.maxR)||t<3)
+      childAnim=requestAnimationFrame(loop);
+  })();
+}
+
+function updateFitness(){
+  const consts={
+    alpha:BASE_CONST.alpha*(1+$("dAlpha").value/100),
+    mp:BASE_CONST.mp*(1+$("dMp").value/100),
+    Lambda:BASE_CONST.Lambda*(1+$("dLambda").value/100),
+    G:BASE_CONST.G*(1+$("dG").value/100)
+  };
+  const fit=fitness(consts);
+  const barColor=fit>70?"var(--teal)":fit>40?"var(--gold)":"var(--coral)";
+  $("fitnessDisplay").innerHTML=
+    `<div style="font-size:20px;font-weight:500;color:${barColor};font-family:monospace;margin-bottom:.3rem">${fit}%</div>`+
+    `<div style="background:var(--panel);border-radius:4px;height:6px;margin-bottom:.5rem">
+      <div style="background:${barColor};height:6px;border-radius:4px;width:${fit}%;transition:width .3s"></div></div>`+
+    `<div>α = ${(consts.alpha*137).toFixed(3)}/137 <span style="color:${Math.abs(consts.alpha-1/137)<1/137*0.1?"var(--teal)":"var(--coral)"}">${consts.alpha<1/137?"▼":"▲"}</span></div>`+
+    `<div>Λ = ${fmtSci(consts.Lambda)}</div>`+
+    `<div>G = ${fmtSci(consts.G)}</div>`+
+    `<div style="margin-top:.3rem;font-size:10.5px;color:var(--muted)">BH 생성 적합도 (스몰린 기준)</div>`;
+}
+
+$("btnChildRun").onclick=runChildSim;
+$("btnChildRand").onclick=()=>{
+  ["dAlpha","dMp","dLambda","dG"].forEach(id=>{
+    const v=Math.round((Math.random()-0.5)*60);
+    $(id).value=v;$(`${id}Val`).textContent=v+"%";
+  });
+  updateFitness();
+};
+$("btnChildReset").onclick=()=>{
+  ["dAlpha","dMp","dLambda","dG"].forEach(id=>{$(id).value=0;$(`${id}Val`).textContent="0%";});
+  updateFitness();initChild();
+};
+["dAlpha","dMp","dLambda","dG"].forEach(id=>{
+  $(id).addEventListener("input",()=>{$(`${id}Val`).textContent=$(id).value+"%";updateFitness();});
+});
+bindSlider("mutRate","mutRateVal","%");
+bindSlider("expandRate","expandRateVal",1);
+bindSlider("genCount","genCountVal",0);
+
+// ════════════════════════════════════════
+//  4. 은하 회전 곡선
+// ════════════════════════════════════════
+function initGalaxy(){
+  const gw=Math.floor($("galaxy").clientWidth/2-20);
+  const gh=Math.floor($("galaxy").clientHeight*0.55);
+  $("galaxyCanvas").width=gw;$("galaxyCanvas").height=gh;
+  $("rotCurveCanvas").width=gw;$("rotCurveCanvas").height=gh;
+  drawGalaxy();drawRotCurve();
+}
+
+function drawGalaxy(){
+  const cv=$("galaxyCanvas"),ctx=cv.getContext("2d");
+  const w=cv.width,h=cv.height,cx=w/2,cy=h/2;
+  const M=+$("galMass").value,dmR=+$("dmRatio").value/100;
+  ctx.fillStyle="#07070e";ctx.fillRect(0,0,w,h);
+
+  // 은하 디스크 (페르마 나선으로 표현)
+  const N=4,tmax=Math.PI*8,scale=Math.min(w,h)*0.44;
+  for(let k=0;k<N;k++){
+    const phase=k/N*Math.PI*2;
+    const pts=fermatPoints(1.5,tmax,1200,scale,cx,cy,phase,null);
+    ctx.lineCap="round";
+    ctx.beginPath();
+    pts.forEach((p,i)=>{
+      const bright=Math.min(0.8,0.1+p.r*0.7);
+      const grad=`rgba(200,180,255,${bright})`;
+      if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+    });
+    const g=ctx.createLinearGradient(cx-scale,cy,cx+scale,cy);
+    g.addColorStop(0,"rgba(150,120,255,.05)");
+    g.addColorStop(0.5,"rgba(220,200,255,.6)");
+    g.addColorStop(1,"rgba(150,120,255,.05)");
+    ctx.strokeStyle=g;ctx.lineWidth=0.8;ctx.stroke();
+  }
+
+  // 암흑물질 헤일로 (희미한 원형 글로우)
+  const halo=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.min(w,h)*0.48);
+  halo.addColorStop(0,"rgba(0,0,0,0)");
+  halo.addColorStop(0.4,`rgba(80,50,150,${dmR*0.08})`);
+  halo.addColorStop(0.8,`rgba(40,20,80,${dmR*0.12})`);
+  halo.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=halo;ctx.fillRect(0,0,w,h);
+
+  // 중심 블랙홀 (질량에 따라 동적으로 크기 조절)
+  const bhRad = 5 + Math.sqrt(+$("bhMass").value) * 1.5;
+  const bhG=ctx.createRadialGradient(cx,cy,0,cx,cy,bhRad);
+  bhG.addColorStop(0,"rgba(255,255,255,.9)");
+  bhG.addColorStop(0.4,"rgba(200,150,255,.5)");
+  bhG.addColorStop(1,"rgba(100,50,200,0)");
+  ctx.fillStyle=bhG;ctx.beginPath();ctx.arc(cx,cy,bhRad,0,Math.PI*2);ctx.fill();
+
+  ctx.fillStyle="#444";ctx.font="10px monospace";ctx.textAlign="left";
+  ctx.fillText(`M_gal = ${M}×10¹¹ M☉  |  DM = ${Math.round(dmR*100)}%`,8,h-8);
+}
+
+function drawRotCurve(){
+  const cv=$("rotCurveCanvas"),ctx=cv.getContext("2d");
+  const w=cv.width,h=cv.height;
+  const M=+$("galMass").value*1e11,dmR=+$("dmRatio").value/100,bhM=+$("bhMass").value*1e6;
+  const G=PHYS.G,Msun=PHYS.Msun;
+  const Rmax_kpc=30,N=200;
+
+  ctx.fillStyle="#07070e";ctx.fillRect(0,0,w,h);
+  // 그리드
+  ctx.strokeStyle="#1a1a28";ctx.lineWidth=0.5;
+  [0.25,0.5,0.75,1].forEach(f=>{
+    ctx.beginPath();ctx.moveTo(0,h*f);ctx.lineTo(w,h*f);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(w*f,0);ctx.lineTo(w*f,h);ctx.stroke();
+  });
+
+  const kpc2m=3.086e19;
+  function vCirc(R_kpc,model){
+    const R=R_kpc*kpc2m+1;
+    if(model==="keplerian"){
+      // 케플러 법칙에 의한 회전 속도 (암흑물질이 없을 때의 바리온 물질 + 중심 BH 질량 기준)
+      return Math.sqrt(G*(M*(1-dmR)+bhM)*Msun/R)*1e-3;
+    } else if(model==="flat"){
+      // NFW 다크매터 헤일로 근사
+      const v0=Math.sqrt(G*M*Msun*(1-dmR)/R)*1e-3;
+      const rs=8*kpc2m;const rho0=G*M*Msun*dmR/(4*Math.PI*rs**3);
+      const vDM=Math.sqrt(4*Math.PI*G*rho0*rs**3/R*(Math.log(1+R/rs)-R/(rs+R)))*1e-3;
+      return Math.sqrt(Math.max(0,v0**2+vDM**2));
+    } else {
+      // 페르마 모델: v ∝ √(r/√r) = r^(1/4) (등면적)
+      const v_flat=Math.sqrt(G*M*Msun/R)*1e-3;
+      return v_flat*Math.pow(R/(3*kpc2m),0.12);
+    }
+  }
+
+  const models=[
+    {id:"keplerian",color:"rgba(240,153,117,.85)",label:"케플러 (BH만)",dash:[3,3]},
+    {id:"flat",color:"rgba(95,202,165,.85)",label:"NFW 다크매터"},
+    {id:"fermat",color:"rgba(175,169,236,.85)",label:"페르마 등면적",dash:[4,2]},
+  ];
+
+  let maxV=0;
+  const Vals={};
+  models.forEach(m=>{
+    Vals[m.id]=[];
+    for(let i=1;i<=N;i++){
+      const R=i/N*Rmax_kpc;
+      const v=vCirc(R,m.id);
+      Vals[m.id].push(v);if(v>maxV)maxV=v;
+    }
+  });
+
+  models.forEach(m=>{
+    ctx.beginPath();ctx.strokeStyle=m.color;ctx.lineWidth=1.8;
+    if(m.dash)ctx.setLineDash(m.dash);else ctx.setLineDash([]);
+    Vals[m.id].forEach((v,i)=>{
+      const x=(i+1)/N*w,y=h-(v/maxV)*h*0.88;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();ctx.setLineDash([]);
+    // 범례
+    ctx.fillStyle=m.color;ctx.fillRect(w-110,8+models.indexOf(m)*14,14,2);
+    ctx.fillStyle="#888";ctx.font="9px monospace";ctx.textAlign="left";
+    ctx.fillText(m.label,w-92,12+models.indexOf(m)*14);
+  });
+
+  // 관측 데이터 포인트 (시뮬레이션)
+  ctx.fillStyle="rgba(240,192,128,.7)";
+  for(let i=0;i<15;i++){
+    const R=(i+1)/16*Rmax_kpc;
+    const v_obs=vCirc(R,"flat")*(0.9+Math.random()*0.2);
+    const x=R/Rmax_kpc*w;const y=h-(v_obs/maxV)*h*0.88;
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+  }
+
+  ctx.fillStyle="#555";ctx.font="10px monospace";ctx.textAlign="left";
+  ctx.fillText("v [km/s] vs R [kpc]",8,15);
+  ctx.fillStyle="#333";ctx.textAlign="right";
+  ctx.fillText(`0 → ${Rmax_kpc} kpc`,w-8,h-6);
+}
+
+["galMass","dmRatio","bhMass"].forEach(id=>{
+  $(id).addEventListener("input",()=>{
+    $(`${id}Val`).textContent=parseFloat($(id).value).toFixed(id==="dmRatio"?0:1)+(id==="dmRatio"?"%":"");
+    drawGalaxy();drawRotCurve();
+  });
+});
+
+// ════════════════════════════════════════
+//  초기화
+// ════════════════════════════════════════
+window.addEventListener("resize",()=>{
+  const active=document.querySelector(".panel.active");
+  if(!active)return;
+  if(active.id==="horizon")initHorizon();
+  if(active.id==="entropy")initEntropy();
+  if(active.id==="child")initChild();
+  if(active.id==="galaxy")initGalaxy();
+});
+
+initHorizon();
+</script>
+</body>
+</html>
